@@ -17,8 +17,8 @@ namespace CPORLib.PlanningModel
         protected HashSet<Predicate> m_lAlwaysTrue;
         protected HashSet<Predicate> m_lChangingPredicates;
 
-        public List<Action> AvailableActions { get; protected set; }
-        public State Predecessor { private set; get; }
+        public List<Action> AvailableActions { get; set; }
+        public State Predecessor { set; get; }
         public PlanningAction GeneratingAction { private set; get; }
         public List<string> History { private set; get; }
         public bool MaintainNegations { get; private set; }
@@ -467,9 +467,17 @@ namespace CPORLib.PlanningModel
         private int m_iHashCode = 0;
         public override int GetHashCode()
         {
-            if (m_iHashCode == 0)
-                m_iHashCode = ToString().GetHashCode();
-            return m_iHashCode;
+            unchecked
+            {
+                int hash = 17;
+                foreach (Predicate p in Predicates)
+                {
+                    hash *= p.GetHashCode();
+                }
+
+                return hash;
+            }
+
         }
 
         public bool Contains(Predicate p)

@@ -38,7 +38,7 @@ namespace CPORLib.PlanningModel
             {
                 return m_fObservation;
             }
-            private set
+            set
             {
                 m_fObservation = value;
                 if (m_fObservation != null)
@@ -287,7 +287,7 @@ namespace CPORLib.PlanningModel
             m_sPredecessor = null;
             m_lObserved = new GenericArraySet<Predicate>(bs.Observed);
             AvailableActions = new List<Action>();
-            UnderlyingEnvironmentState = bs.UnderlyingEnvironmentState;
+            UnderlyingEnvironmentState = bs.ChooseState(true);
             m_bsInitialBelief = bs;
             ChildCount = 0;
 
@@ -655,7 +655,7 @@ namespace CPORLib.PlanningModel
             return IsApplicable(a);
         }
 
-        private bool IsApplicable(Action a)
+        public bool IsApplicable(Action a)
         {
             if (a.Preconditions == null)
                 return true;
@@ -3261,6 +3261,11 @@ namespace CPORLib.PlanningModel
             return fReduced;
         }
 
+
+        public virtual void GroundAllActions()
+        {
+            AvailableActions = Problem.Domain.GroundAllActions(m_lObserved, false);
+        }
 
     }
 }

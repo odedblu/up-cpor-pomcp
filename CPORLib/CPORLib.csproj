@@ -17,4 +17,8 @@
     <PackageReference Include="pythonnet" Version="3.0.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Algorithms\POMCP\RewardFunctions\" />
+  </ItemGroup>
+
 </Project>

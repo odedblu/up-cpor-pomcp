@@ -56,11 +56,11 @@ namespace CPORLib.Tools
         private int GetIndex(T t)
         {
             
-            if (t is GroundedPredicate gp)
+            /*if (t is GroundedPredicate gp)
             {
                 if(gp.Index !=  -1)
                     return gp.Index;
-            }
+            }*/
            
             if (!Indexes.TryGetValue(t, out int index))
             {

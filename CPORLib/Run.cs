@@ -30,7 +30,7 @@ namespace CPORLib
                 bool bOnline = false;
                 if (args.Length > 3)
                     bOnline = args[2] == "online";
-                RunPlanner(sDomainFile
+                RunPOMCPPlanner(sDomainFile
                     , sProblemFile,
                     sOutputFile,
                     bOnline);
@@ -74,6 +74,38 @@ namespace CPORLib
             DateTime dtEnd = DateTime.Now;
             Console.WriteLine();
             Console.WriteLine("Run " + cExecutions + " in " + (dtEnd - dtStart).TotalMilliseconds + ", avg = " + dSum / cExecutions);
+
+        }
+        //Create run POMCP similar to RunPlanner here.
+        public static void RunPOMCPPlanner(string sDomainFile, string sProblemFile, string sOutputFile, bool bOnline, bool bValidate = false)
+        {
+
+            Debug.WriteLine("Reading domain and problem");
+            Parser parser = new Parser();
+            Domain domain = parser.ParseDomain(sDomainFile);
+            Problem problem = parser.ParseProblem(sProblemFile, domain);
+            Debug.WriteLine("Done reading domain and problem");
+
+            double EXPLORATION_FACTOR_UCB = 5.0;
+            double DISCOUNT_FACTOR = 0.95;
+            double DEPTH_THRESHOLD = 0.55;
+            int SIMULATIONS = 500;
+
+            IRolloutPolicy RolloutPolicy = new GuyHaddHeuristuc(domain, problem);
+
+            IActionSelectPolicy ActionSelectPolicy = new UCBValueActionSelectPolicy(EXPLORATION_FACTOR_UCB);
+            IActionSelectPolicy FinalActionSelectPolicy = new MaxValueActionSelectPolicy();
+
+
+
+            ObservationPomcpNode root = new ObservationPomcpNode(new PartiallySpecifiedState(problem.GetInitialBelief()));
+            PomcpAlgorithm pomcpAlgorithm = new PomcpAlgorithm(DISCOUNT_FACTOR, DEPTH_THRESHOLD, SIMULATIONS, problem, root, FinalActionSelectPolicy, ActionSelectPolicy, RolloutPolicy, RewardFunctions.GeneralReward);
+            List<PlanningAction> plan = pomcpAlgorithm.FindPlan(true);
+            foreach (PlanningAction action in plan)
+            {
+                Console.WriteLine(action.Name);
+            }
+
 
         }
 

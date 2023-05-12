@@ -12,7 +12,7 @@ public class Program
         string sDomainFile = Path.Combine(sPath, "d.pddl");
         string sProblemFile = Path.Combine(sPath, "p.pddl");
         string sOutputFile = Path.Combine(sPath, "out.txt");
-        Run.RunPlanner(sDomainFile
+        Run.RunPOMCPPlanner(sDomainFile
             , sProblemFile,
             sOutputFile,
             bOnline, false);
@@ -24,32 +24,35 @@ public class Program
         gcmd_line.debug = 0;
 
         //RunTest("localize5noisy", bOnline);
-        
-        RunTest("doors15", bOnline);
-        //RunTest("wumpus10", bOnline);        
-        
-        RunTest("blocks3", bOnline);
+
         RunTest("localize5", bOnline);
 
 
+        RunTest("doors5", bOnline);
+
+        RunTest("blocks3", bOnline);
+
+
+        RunTest("wumpus05", bOnline);
+
+
+        RunTest("wumpus10", bOnline);
 
         RunTest("medpks010", bOnline);
         
         
         
-        RunTest("doors5", bOnline); 
+        RunTest("blocks3", bOnline);
 
               
         RunTest("colorballs2-2", bOnline);
         RunTest("blocks2", bOnline);
         RunTest("unix1", bOnline);
-        RunTest("wumpus05", bOnline);
 
 
-
+        RunTest("doors15", bOnline);
         
 
-        RunTest("blocks3", bOnline);
         RunTest("blocks2", bOnline);
         //RunTest("wumpus05", bOnline);
         //RunTest("medpks010", bOnline);
@@ -61,7 +64,7 @@ public class Program
 
     public static void Main(string[] args)
     {
-        TestAll(false);
+        TestAll(true);
         //return;
 
         //TestClassicalFFCS();

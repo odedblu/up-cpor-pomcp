@@ -239,21 +239,28 @@ namespace CPORLib.LogicalUtilities
             }
             return false;
         }
-
+        protected static Dictionary<string, int> GroundedPredicatesCache = new Dictionary<string, int>();
+    
         protected override int ComputeHashCode()
         {
-            int iSum = 0;
-            foreach (Constant c in Constants)
+            if (GroundedPredicatesCache.ContainsKey(ToString()))
             {
-                iSum += c.GetHashCode();
-                iSum *= 1000;
+                return GroundedPredicatesCache[ToString()];
             }
-            iSum += m_iName;
 
-            //if (Name == "at" && Constants[0].Name == "p2-4")
-            //    Console.Write("*");
-
-            return iSum;
+            int iSum = 0;
+            unchecked
+            {
+                foreach (Constant c in Constants)
+                {
+                    iSum += c.GetHashCode();
+                    iSum *= 100;
+                }
+                iSum += m_iName;
+                GroundedPredicatesCache[ToString()] = iSum;
+                Index = iSum;
+                return iSum;
+            }
         }
 
         public override Predicate Clone()

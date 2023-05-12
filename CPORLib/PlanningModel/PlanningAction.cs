@@ -199,6 +199,23 @@ namespace CPORLib.PlanningModel
             return lSplit;
         }
 
+        public PlanningAction RemoveNonDeterminismByOptionIndex(int iOptionIndex)
+        {
+            PlanningAction aNew = Clone();
+            aNew.Effects = null;
+            if (Effects is ProbabilisticFormula)
+            {
+                // Case we staying in the same state.
+                if (iOptionIndex < 0) return aNew;
+
+                // Select one of the probability effects.
+                ProbabilisticFormula probabilisticEffects = (ProbabilisticFormula)Effects;
+                aNew.Effects = (CompoundFormula)(probabilisticEffects.Options[iOptionIndex]).Clone();
+                return aNew;
+            }
+            return aNew;
+        }
+
         public Formula GetApplicableEffects(ISet<Predicate> lPredicates, bool bContainsNegations)
         {
             List<CompoundFormula> lConditions = new List<CompoundFormula>();
