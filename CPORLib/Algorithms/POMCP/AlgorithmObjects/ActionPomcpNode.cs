@@ -39,6 +39,8 @@ namespace CPORLib.Algorithms
         {
             int iHashCode = ActionPomcpNode.GetObservationsHash(fObservation);
             ObservationPomcpNode nObservation = new ObservationPomcpNode(this, partiallySpecifiedState, particleFilter, fObservation);
+            if (partiallySpecifiedState == null)
+                nObservation.InexactExpansion = true;
             Children.Add(iHashCode, nObservation);
         }
 

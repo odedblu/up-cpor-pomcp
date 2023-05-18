@@ -17,6 +17,8 @@ namespace CPORLib.Algorithms
 {
     internal class PomcpAlgorithm: PlannerBase
     {
+
+        public bool InexactExpansion = false;
         public double DiscountFactor { get; set; }
         public double DepthThreshold { get; set; }
 
@@ -39,7 +41,7 @@ namespace CPORLib.Algorithms
                               Func<State, Problem,Action, double> rewardFunction,
                               bool ExactBelifeStateRepresentation=false) : base(problem.Domain, problem)
         {
-            MaxInnerDepth = 2;
+            MaxInnerDepth = 5;
             MaxOuterDepth = 50;
 
 
@@ -60,6 +62,10 @@ namespace CPORLib.Algorithms
         public void Search(ObservationPomcpNode nCurrent, bool verbose=false)
         {
             if (verbose) Console.WriteLine("Simulating...");
+
+
+            if (nCurrent.InexactExpansion)
+                MakeExact(nCurrent);
 
             // Initial Root particle filter.
             if(nCurrent.ParticleFilter.Size() < 1000)
@@ -112,7 +118,39 @@ namespace CPORLib.Algorithms
             } 
         }
 
+        private void MakeExact(ObservationPomcpNode nCurrent)
+        {
+            List<PomcpNode> lActions = new List<PomcpNode>(nCurrent.Children.Values);
+            foreach (ActionPomcpNode nAction in lActions)
+            {
+                Action a = nAction.Action;
+                nCurrent.PartiallySpecifiedState.ApplyOffline(a, out bool bPreconditionFailure, out PartiallySpecifiedState psTrueState, out PartiallySpecifiedState psFalseState);
+                if (a.Observe != null && (psTrueState == null || psFalseState == null)) //useless observation over something that we already know
+                {
+                    nCurrent.RemoveChild(nAction);
+                    continue;
+                }
+                if (bPreconditionFailure)
+                {
+                    nCurrent.RemoveChild(nAction);
+                }
+                else 
+                { 
+                    if (psTrueState != null)
+                    {
+                        ObservationPomcpNode opn = nAction.GetObservationChild(a.Observe);
+                        opn.PartiallySpecifiedState = psTrueState;
+                    }
+                    if (psFalseState != null)
+                    {
+                        ObservationPomcpNode opn = nAction.GetObservationChild(a.Observe.Negate());
+                        opn.PartiallySpecifiedState = psFalseState;
+                    }
 
+                }
+            }
+            nCurrent.InexactExpansion = false;
+        }
 
         public int SimulationsCount = 0;
         public void Simulate(ObservationPomcpNode Node)
@@ -147,6 +185,9 @@ namespace CPORLib.Algorithms
 
             while (!Current.IsLeaf())
             {
+
+                FilterActions(Current, CurrentState);
+
                 // Select next action to preform inside the tree.
                 Action NextAction = ActionSelectPolicy.SelectBestAction(Current, CurrentState);
 
@@ -192,7 +233,12 @@ namespace CPORLib.Algorithms
 
             // Expand node.
             if (Current.IsLeaf())
-                ExpandNode(Current);
+            {
+                if (InexactExpansion)
+                    ExpandNodeInexact(Current);
+                else
+                    ExpandNode(Current);
+            }
 
             // Finished run inside the tree, now do rollout.
             double Reward = ForRollout(CurrentState, CurrentDepth);
@@ -269,6 +315,17 @@ namespace CPORLib.Algorithms
             }
         }
 
+        private void FilterActions(ObservationPomcpNode opn, State s)
+        {
+            List<PomcpNode> lChildren = new List<PomcpNode>(opn.Children.Values);
+            foreach(ActionPomcpNode acn in lChildren)
+            {
+                Action a = acn.Action;
+                if (a.Preconditions != null && !a.Preconditions.IsTrue(s.Predicates))
+                    opn.RemoveChild(acn);
+            }
+        }
+
         // Get the next observation pomcp node by action and observation.
         private ObservationPomcpNode GetNextObservationNode(ObservationPomcpNode Node, Action a, List<Predicate> ObservedPredicates)
         {
@@ -314,8 +371,8 @@ namespace CPORLib.Algorithms
                     }
                     if (psFalseState != null)
                     {
-                        BelifeParticles PositiveNextParticleFilter = Node.ParticleFilter.Apply(a, a.Observe.Negate());
-                        nAction.AddObservationChild(psFalseState, a.Observe.Negate(), PositiveNextParticleFilter);
+                        BelifeParticles NegativeNextParticleFilter = Node.ParticleFilter.Apply(a, a.Observe.Negate());
+                        nAction.AddObservationChild(psFalseState, a.Observe.Negate(), NegativeNextParticleFilter);
                     }
                     Node.AddActionPomcpNode(nAction);
 
@@ -326,6 +383,37 @@ namespace CPORLib.Algorithms
                 Node.ChildrenSize() == 1)
                 Console.Write("*");
         }
+
+
+        private void ExpandNodeInexact(ObservationPomcpNode Node)
+        {
+            Expansions++;
+
+            Node.InexactExpansion = true;
+            foreach (Action a in Problem.GroundedActions)
+            {
+                ActionPomcpNode nAction = new ActionPomcpNode(a);
+                nAction.InexactExpansion = true;
+                if (a.Observe != null)
+                {
+                    BelifeParticles PositiveNextParticleFilter = Node.ParticleFilter.Apply(a, a.Observe);
+                    nAction.AddObservationChild(null, a.Observe, PositiveNextParticleFilter);
+
+                    BelifeParticles NegativeNextParticleFilter = Node.ParticleFilter.Apply(a, a.Observe.Negate());
+                    nAction.AddObservationChild(null, a.Observe.Negate(), NegativeNextParticleFilter);
+                }
+                else
+                {
+                    BelifeParticles NextParticleFilter = Node.ParticleFilter.Apply(a, null);
+                    nAction.AddObservationChild(null, null, NextParticleFilter);
+                }
+                Node.AddActionPomcpNode(nAction);
+            }
+            
+        }
+
+
+
 
         public double MultipleRollouts(BelifeParticles possiboleStates, int currentDepth, int numberOfRepets)
         {
@@ -444,7 +532,7 @@ namespace CPORLib.Algorithms
                 if (bestValidAction.Name == "checking" && Plan.Count > 0 && !Plan.Last().Name.StartsWith("move"))
                 {
                     PrintTree(nCurrent, "", 0);
-                    Search(nCurrent, verbose);
+                    //Search(nCurrent, verbose);
                 }
 
                 Plan.Add(bestValidAction);
@@ -498,8 +586,8 @@ namespace CPORLib.Algorithms
                 if (verbose)
                 {
                     Console.WriteLine($"Selected action: {bestValidAction.Name}");
-                    Console.WriteLine($"New Underline state is: {string.Join(",", sUnderlyingState.Predicates.Where(predicate => !predicate.Negation))}");
-                    Console.WriteLine($"New state is: {string.Join(",", CurrentState.Observed.Where(predicate => !predicate.Negation))}");
+                    Console.WriteLine($"New Underline state is: {string.Join(",", sUnderlyingState.Predicates.Where(predicate => !predicate.Negation && predicate.Name.StartsWith("at")))}");
+                    Console.WriteLine($"New state is: {string.Join(",", CurrentState.Observed.Where(predicate => !predicate.Negation && predicate.Name.StartsWith("at")))}");
                 }
             }
 

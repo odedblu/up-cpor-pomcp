@@ -71,5 +71,14 @@ namespace CPORLib.Algorithms
         {
             return string.Join(", ", ObservedPredicates);
         }
+
+        internal void RemoveChild(ActionPomcpNode acn)
+        {
+            int actionHash = acn.Action.GetHashCode();
+            if (Children.ContainsKey(actionHash))
+            {
+                Children.Remove(actionHash);
+            }
+        }
     }
 }

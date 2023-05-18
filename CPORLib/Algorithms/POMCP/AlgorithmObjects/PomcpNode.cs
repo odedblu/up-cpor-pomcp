@@ -13,6 +13,8 @@ namespace CPORLib.Algorithms
         public int VisitedCount;
         public double Value;
 
+        public bool InexactExpansion { get; set; }
+
 
         public int ChildrenSize()
         {

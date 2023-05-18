@@ -7,6 +7,7 @@ public class Program
 {
     public static void RunTest(string sName, bool bOnline)
     {
+        DateTime dtStart = DateTime.Now;
         string sPath = @"..\..\..\..\Tests\" + sName;
         //string sPath = @"C:\Users\Guy\OneDrive - Ben Gurion University of the Negev\Research\projects\AIPlan4EU\up-cpor\Tests\" + sName;
         string sDomainFile = Path.Combine(sPath, "d.pddl");
@@ -16,6 +17,9 @@ public class Program
             , sProblemFile,
             sOutputFile,
             bOnline, false);
+
+        DateTime dtEnd = DateTime.Now;
+        Console.WriteLine("Time: " + (dtEnd - dtStart).TotalSeconds);
     }
     public static void TestAll(bool bOnline)
     {
@@ -24,14 +28,16 @@ public class Program
         gcmd_line.debug = 0;
 
         //RunTest("localize5noisy", bOnline);
-
         RunTest("doors5", bOnline);
+       RunTest("localize5", bOnline);
+
+
+
 
         RunTest("blocks3", bOnline);
 
 
-        RunTest("localize5", bOnline);
-
+ 
 
         RunTest("wumpus05", bOnline);
 
