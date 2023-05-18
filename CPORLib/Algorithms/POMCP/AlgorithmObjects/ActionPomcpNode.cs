@@ -18,7 +18,7 @@ namespace CPORLib.Algorithms
         public ActionPomcpNode(Action action)
         {
             Parent = null;
-            Childs = new Dictionary<int, PomcpNode>();
+            Children = new Dictionary<int, PomcpNode>();
             VisitedCount = 0;
             Value = 0;
             Action = action;
@@ -27,21 +27,37 @@ namespace CPORLib.Algorithms
         public ActionPomcpNode(ObservationPomcpNode ObservationParentNode, Action action)
         {
             Parent = ObservationParentNode;
-            Childs = new Dictionary<int, PomcpNode>();
+            Children = new Dictionary<int, PomcpNode>();
             VisitedCount = 0;
             Value = 0;
             Action = action;
         }
 
+
+
+        public void AddObservationChild(PartiallySpecifiedState partiallySpecifiedState, Formula fObservation, BelifeParticles particleFilter)
+        {
+            int iHashCode = ActionPomcpNode.GetObservationsHash(fObservation);
+            ObservationPomcpNode nObservation = new ObservationPomcpNode(this, partiallySpecifiedState, particleFilter, fObservation);
+            Children.Add(iHashCode, nObservation);
+        }
+
+        public ObservationPomcpNode GetObservationChild(Formula fObservation)
+        {
+            int iHashCode = ActionPomcpNode.GetObservationsHash(fObservation);
+            ObservationPomcpNode nObservation = (ObservationPomcpNode)Children[iHashCode];
+            return nObservation;
+        }
         public ObservationPomcpNode AddObservationChilds(List<Predicate> Observations, PartiallySpecifiedState partiallySpecifiedState, BelifeParticles particleFilter)
         {
-            if (Childs.ContainsKey(GetObservationsHash(Observations)))
+            if (Children.ContainsKey(GetObservationsHash(Observations)))
             {
-                return (ObservationPomcpNode)Childs[GetObservationsHash(Observations)];
+                return (ObservationPomcpNode)Children[GetObservationsHash(Observations)];
             }
-            ObservationPomcpNode observationPomcpNode = new ObservationPomcpNode(this, Observations, partiallySpecifiedState, particleFilter);
+            PredicateFormula pf = new PredicateFormula(Observations.First());
+            ObservationPomcpNode observationPomcpNode = new ObservationPomcpNode(this, Observations, partiallySpecifiedState, particleFilter, pf);
             int ObservationsHash = GetObservationsHash(Observations);
-            Childs.Add(ObservationsHash, observationPomcpNode);
+            Children.Add(ObservationsHash, observationPomcpNode);
             return observationPomcpNode;
         }
 
@@ -53,6 +69,20 @@ namespace CPORLib.Algorithms
                 resultHash = resultHash ^ predicate.GetHashCode();
             }
             return resultHash;
+        }
+
+        public static int GetObservationsHash(Formula fObservation)
+        {
+            if (fObservation == null)
+                return 0;
+            if(fObservation is PredicateFormula pf)
+            {
+                if (pf.Predicate.Negation)
+                    return 2;
+                else
+                    return 1;
+            }
+            throw new NotImplementedException();
         }
 
         public string ToString()

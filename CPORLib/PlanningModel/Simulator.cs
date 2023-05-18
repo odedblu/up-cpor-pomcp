@@ -49,7 +49,7 @@ namespace CPORLib.PlanningModel
         public void Reset()
         {
             InitialBelief = Problem.GetInitialBelief();
-            InitialChosenState = InitialBelief.ChooseState(true);
+            InitialChosenState = InitialBelief.ChooseState(true, true);
             CurrentState = new PartiallySpecifiedState(InitialBelief);
         }
     }

@@ -51,7 +51,6 @@ namespace CPORLib.Algorithms
 
 
 
-                pssInitial.mayChanged = new HashSet<Predicate>();
                 pssInitial.ActionsWithConditionalEffect = new HashSet<Action>();
 
                 stateStack.Push(pssInitial);

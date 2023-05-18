@@ -8,18 +8,22 @@
 
     (:action sense-up
       :parameters ()
+      :precondition (and (ok))
       :observe (free-up) )
 
    (:action sense-down
      :parameters ()
+     :precondition (and (ok))
      :observe (free-down) )
 
    (:action sense-left
      :parameters ()
+     :precondition (and (ok))
      :observe (free-left) )
 
    (:action sense-right
      :parameters ()
+     :precondition (and (ok))
      :observe (free-right) )
 
    (:action move-up

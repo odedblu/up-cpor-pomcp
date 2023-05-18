@@ -9,14 +9,14 @@ namespace CPORLib.Algorithms
     internal abstract class PomcpNode
     {
         public PomcpNode Parent;
-        public Dictionary<int, PomcpNode> Childs;
+        public Dictionary<int, PomcpNode> Children;
         public int VisitedCount;
         public double Value;
 
 
         public int ChildrenSize()
         {
-            return Childs.Count;
+            return Children.Count;
         }
 
         public bool IsLeaf()

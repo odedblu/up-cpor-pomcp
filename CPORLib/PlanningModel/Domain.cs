@@ -2275,6 +2275,9 @@ namespace CPORLib.PlanningModel
 
         public List<PlanningAction> GroundAllActions(Problem problem, bool bRemoveConstantPredicates)
         {
+            if (problem.GroundedActions != null)
+                return problem.GroundedActions;
+
             List<PlanningAction> lAllGrounded = new List<PlanningAction>();
             Dictionary<Parameter, Constant> dBindings = new Dictionary<Parameter, Constant>();
             List<Parameter> lToBind = null;
@@ -2423,6 +2426,8 @@ namespace CPORLib.PlanningModel
                     }
                 }
             }
+
+            problem.GroundedActions = lAllGrounded;
 
             return lAllGrounded;
         }

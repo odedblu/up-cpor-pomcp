@@ -97,7 +97,7 @@ namespace CPORLib.Algorithms
         }
         public List<string> Plan()
         {
-            State sStartState = m_pProblem.GetInitialBelief().ChooseState(true);
+            State sStartState = m_pProblem.GetInitialBelief().ChooseState(true, true);
             List<string> lActions = Plan(sStartState);
             return lActions;
         }

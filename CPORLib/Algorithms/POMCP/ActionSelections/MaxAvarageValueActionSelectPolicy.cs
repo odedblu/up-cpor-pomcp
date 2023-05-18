@@ -14,7 +14,7 @@ namespace CPORLib.Algorithms
     {
         public Action SelectBestAction(PomcpNode SelectionNode, State CurrentState)
         {
-            Dictionary<int, PomcpNode> Childrens = SelectionNode.Childs;
+            Dictionary<int, PomcpNode> Childrens = SelectionNode.Children;
             if(Childrens.Count == 0)
             {
                 throw new ArgumentException("Childrens is empty, could not select best action.");

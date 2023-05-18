@@ -25,12 +25,12 @@ public class Program
 
         //RunTest("localize5noisy", bOnline);
 
-        RunTest("localize5", bOnline);
-
-
         RunTest("doors5", bOnline);
 
         RunTest("blocks3", bOnline);
+
+
+        RunTest("localize5", bOnline);
 
 
         RunTest("wumpus05", bOnline);

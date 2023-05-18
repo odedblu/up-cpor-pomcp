@@ -218,7 +218,7 @@ namespace CPORLib.Algorithms
             Parser p = new Parser();
             Domain domain = p.ParseDomain(sPath + "Kd.pddl");
             Problem problem = p.ParseProblem(sPath + "Kp.pddl", deadEndFile, domain);
-            State sInit = problem.GetInitialBelief().ChooseState(true);
+            State sInit = problem.GetInitialBelief().ChooseState(true, true);
             State sCurrent = sInit, sNext = null;
             for (int i = 0; i < lPlan.Count; i++)
             {

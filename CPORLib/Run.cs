@@ -50,7 +50,7 @@ namespace CPORLib
             List<State> states = new List<State>();
             for (int i = 0; i < cExecutions; i++)
             {
-                State s = bs.ChooseState(true);
+                State s = bs.ChooseState(true, true);
                 states.Add(s);
                 if (i % 100 == 0)
                     Console.Write("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" + i + "/" + cExecutions);
@@ -86,7 +86,7 @@ namespace CPORLib
             Problem problem = parser.ParseProblem(sProblemFile, domain);
             Debug.WriteLine("Done reading domain and problem");
 
-            double EXPLORATION_FACTOR_UCB = 5.0;
+            double EXPLORATION_FACTOR_UCB = 50.0;
             double DISCOUNT_FACTOR = 0.95;
             double DEPTH_THRESHOLD = 0.55;
             int SIMULATIONS = 500;
@@ -98,7 +98,7 @@ namespace CPORLib
 
 
 
-            ObservationPomcpNode root = new ObservationPomcpNode(new PartiallySpecifiedState(problem.GetInitialBelief()));
+            ObservationPomcpNode root = new ObservationPomcpNode(new PartiallySpecifiedState(problem.GetInitialBelief()), null);
             PomcpAlgorithm pomcpAlgorithm = new PomcpAlgorithm(DISCOUNT_FACTOR, DEPTH_THRESHOLD, SIMULATIONS, problem, root, FinalActionSelectPolicy, ActionSelectPolicy, RolloutPolicy, RewardFunctions.GeneralReward);
             List<PlanningAction> plan = pomcpAlgorithm.FindPlan(true);
             foreach (PlanningAction action in plan)

@@ -14,35 +14,57 @@ namespace CPORLib.Algorithms
         public BelifeParticles ParticleFilter;
         public List<Predicate> ObservedPredicates;
         public PartiallySpecifiedState PartiallySpecifiedState;
+        public Formula Observation { get; set; }
 
-        public ObservationPomcpNode(PartiallySpecifiedState partiallySpecifiedState)
+        public double RolloutSum { get; internal set; }
+
+        public ObservationPomcpNode(PartiallySpecifiedState partiallySpecifiedState, Formula observation)
         {
             Parent = null;
-            Childs = new Dictionary<int, PomcpNode>();
+            Children = new Dictionary<int, PomcpNode>();
             VisitedCount = 0;
             Value = 0;
             ParticleFilter = new BelifeParticles();
             ObservedPredicates = null;
             PartiallySpecifiedState = partiallySpecifiedState;
+            Observation = observation;
         }
 
-        public ObservationPomcpNode(ActionPomcpNode ActionParentNode, List<Predicate> Observed, PartiallySpecifiedState partiallySpecifiedState, BelifeParticles particleFilter)
+        public ObservationPomcpNode(ActionPomcpNode ActionParentNode, List<Predicate> Observed, 
+            PartiallySpecifiedState partiallySpecifiedState, BelifeParticles particleFilter, Formula observation)
         {
             Parent = ActionParentNode;
-            Childs = new Dictionary<int, PomcpNode>();
+            Children = new Dictionary<int, PomcpNode>();
             VisitedCount = 0;
             Value = 0;
             ParticleFilter = particleFilter;
             ObservedPredicates = new List<Predicate>(); 
             foreach (Predicate Predicate in Observed) ObservedPredicates.Add(Predicate);
             PartiallySpecifiedState = partiallySpecifiedState;
+            Observation = observation;
+
         }
 
+        public ObservationPomcpNode(ActionPomcpNode ActionParentNode, PartiallySpecifiedState partiallySpecifiedState, BelifeParticles particleFilter, Formula observation)
+        {
+            Parent = ActionParentNode;
+            Children = new Dictionary<int, PomcpNode>();
+            VisitedCount = 0;
+            Value = 0;
+            ParticleFilter = particleFilter;
+            PartiallySpecifiedState = partiallySpecifiedState;
+            Observation = observation;
+
+        }
 
         public void AddActionPomcpNode(ActionPomcpNode actionPomcpNode)
         {
             int actionHash = actionPomcpNode.Action.GetHashCode();
-            if(!Childs.ContainsKey(actionHash)) Childs.Add(actionHash, actionPomcpNode);
+            if (!Children.ContainsKey(actionHash))
+            {
+                actionPomcpNode.Parent = this;
+                Children.Add(actionHash, actionPomcpNode);
+            }
         }
 
         public string ToString()

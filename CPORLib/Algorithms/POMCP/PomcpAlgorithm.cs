@@ -9,7 +9,9 @@ using CPORLib.PlanningModel;
 using CPORLib.LogicalUtilities;
 using Action = CPORLib.PlanningModel.PlanningAction;
 using Microsoft.SolverFoundation.Services;
-
+using CPORLib.FFCS;
+using CPORLib.Tools;
+using System.Resources;
 
 namespace CPORLib.Algorithms
 {
@@ -17,6 +19,10 @@ namespace CPORLib.Algorithms
     {
         public double DiscountFactor { get; set; }
         public double DepthThreshold { get; set; }
+
+        public int MaxInnerDepth { get; set; }
+        public int MaxOuterDepth { get; set; }
+
         public int SimulationsThreshold { get; set; }
         public Problem Problem { get; set; }
         public ObservationPomcpNode Root { get; set; }
@@ -33,6 +39,10 @@ namespace CPORLib.Algorithms
                               Func<State, Problem,Action, double> rewardFunction,
                               bool ExactBelifeStateRepresentation=false) : base(problem.Domain, problem)
         {
+            MaxInnerDepth = 2;
+            MaxOuterDepth = 50;
+
+
             DiscountFactor = discountFactor;
             DepthThreshold = depthThreshold;
             SimulationsThreshold = simulationsThreshold;
@@ -42,20 +52,47 @@ namespace CPORLib.Algorithms
             FinalActionSelectPolicy = finalActionSelectPolicy;
             RolloutPolicy = rolloutPolicy;
             RewardFunction = rewardFunction;
+            Options.ComputeCompletePlanTree = true;
         }
 
        
 
-        public void Search(bool verbose=false)
+        public void Search(ObservationPomcpNode nCurrent, bool verbose=false)
         {
             if (verbose) Console.WriteLine("Simulating...");
 
             // Initial Root particle filter.
-            if(Root.ParticleFilter.Size() == 0)
+            if(nCurrent.ParticleFilter.Size() < 1000)
             {
-                for(int i = 0; i < 500; i++)
+                List<Action> lActions = new List<Action>();
+                List<Formula> lObservations = new List<Formula>();
+                PartiallySpecifiedState pssCurrent = nCurrent.PartiallySpecifiedState;
+                while(pssCurrent.GeneratingAction != null)
                 {
-                    Root.ParticleFilter.AddState(Root.PartiallySpecifiedState.m_bsInitialBelief.ChooseState(true));
+                    lActions.Add(pssCurrent.GeneratingAction);
+                    lObservations.Add(pssCurrent.GeneratingObservation);
+                    pssCurrent = pssCurrent.Predecessor;
+                }
+
+
+                for (int i = 0; i < 500; i++)
+                {
+                    State s = nCurrent.PartiallySpecifiedState.m_bsInitialBelief.ChooseState(true, true);
+                    for(int j =  lActions.Count - 1; j >= 0; j--)
+                    {
+                        Action a = lActions[j];
+                        Formula o = lObservations[j];
+                        State sTag = s.Apply(a);
+                        if (sTag == null)
+                            Console.Write("*");
+                        if(o != null)
+                        {
+                            if(!o.IsTrue(sTag.Predicates, false))
+                                Console.Write("*");
+                        }
+                        s = sTag;
+                    }
+                    nCurrent.ParticleFilter.AddState(s);
                 }
             }
             
@@ -67,176 +104,227 @@ namespace CPORLib.Algorithms
                     int progress = (int)((double)SimulationIndex / SimulationsThreshold * 100);
                     PrintProgressBar(progress);
                 }
-                Simulate(Root);
+                Simulate(nCurrent);
             }
             if (verbose) {
                 Console.WriteLine("Done simulations.");
-                PrintActionLayer(Root);
+                PrintActionLayer(nCurrent);
             } 
         }
 
-        
 
+
+        public int SimulationsCount = 0;
         public void Simulate(ObservationPomcpNode Node)
         {
+
             // Init 
             int CurrentDepth = 0;
-            State SampledState;
+            SimulationsCount++;
+            State SampledState = null;
             // Check if node is the start root.
             if (Node.ParticleFilter.Size() == 0)
             {
-                SampledState = Node.PartiallySpecifiedState.m_bsInitialBelief.ChooseState(true);
+                Console.WriteLine("BUGBUG");
+                //SampledState = Node.PartiallySpecifiedState.m_bsInitialBelief.ChooseState(true);
             }
             else
             {
                 // Sample a fully observable state from the pomcp node's particle filter.
                 SampledState = Node.ParticleFilter.GetRandomState();
             }
-            SampledState.GroundAllActions();
             // Running through the tree, until getting to a leaf pomcp node.
             ObservationPomcpNode Current = Node;
             State CurrentState = SampledState;
+
+            // if (SimulationsCount == 501)
+            //    Console.WriteLine("*");
+
+            List<Action> lActions = new List<PlanningAction>();
+            List<State> lStates = new List<State>();
+            List<Formula> lObservations = new List<Formula>();
+
+
             while (!Current.IsLeaf())
             {
                 // Select next action to preform inside the tree.
                 Action NextAction = ActionSelectPolicy.SelectBestAction(Current, CurrentState);
 
+                // Apply action on CurrentState.
+                State NextState = CurrentState.Apply(NextAction);
+                if (NextState == null)
+                    Console.WriteLine("*");
 
                 // Get the observation's predicates of this action.
                 Formula observation = null;
-                if (NextAction.Observe != null && NextAction.Observe.IsTrue(CurrentState.Predicates))
+                if (NextAction.Observe != null)
                 {
-                    observation = NextAction.Observe;
+                    if (NextAction.Observe.IsTrue(NextState.Predicates, false))
+                        observation = NextAction.Observe;
+                    else
+                        observation = NextAction.Observe.Negate();
+                    //PredicatsObservation = observation.GetAllPredicates().ToList();
                 }
-                else if(NextAction.Observe != null)
-                {
-                    observation = NextAction.Observe.Negate();
-                }
-                List<Predicate> PredicatsObservation = new List<Predicate>();
-                if (observation != null)
-                {
-                    PredicatsObservation = observation.GetAllPredicates().ToList();
-                }
+                lStates.Add(CurrentState);
+                lActions.Add(NextAction);
+                lObservations.Add(observation);
 
                 // Get Next pomcp observation node inside the tree.
-                Current = GetNextObservationNode(Current,NextAction,PredicatsObservation);
-                CurrentDepth += 1;
+                ObservationPomcpNode Next = GetNextObservationNode(Current, NextAction, observation);
+                Next.ParticleFilter.AddState(NextState);
+                if (Next == null)
+                    Console.WriteLine("*");
 
+
+
+
+                CurrentState = NextState;
+                Current = Next;
+                CurrentDepth += 1;
                 // Check we havent met the maximal depth
-                if ((Math.Pow(DiscountFactor, (double)CurrentDepth) < DepthThreshold || DiscountFactor == 0) && CurrentDepth != 0)
+                //if ((Math.Pow(DiscountFactor, (double)CurrentDepth) < DepthThreshold || DiscountFactor == 0) && CurrentDepth != 0)
+                if (CurrentDepth >= MaxInnerDepth)
                 {
                     //Console.WriteLine("Got max depth on search");
-                    return;
+                    break;
                 }
-
-
-                // Apply action on CurrentState.
-                CurrentState = CurrentState.Apply(NextAction);
-                CurrentState.GroundAllActions();
             }
 
             // Expand node.
-            ExpandNode(Current);
+            if (Current.IsLeaf())
+                ExpandNode(Current);
 
             // Finished run inside the tree, now do rollout.
-            double Reward = MultipleRollouts(Current.ParticleFilter, CurrentDepth, 1);
+            double Reward = ForRollout(CurrentState, CurrentDepth);
+            //double Reward = MultipleRollouts(Current.ParticleFilter, CurrentDepth, 1);
+            Current.RolloutSum += Reward;
+            Current.VisitedCount++;
             double CummulativeReward = Reward;
 
-            // Start back propogation phase.
-            while (Current != Node && !Double.IsNaN(Reward))
-            {
-                // Increase the action pomcp node's visited count.
-                Current.Parent.VisitedCount++;
-                // Increase the observation pomcp node's visited count.
-                Current.VisitedCount++; 
-                Current.Parent.Value += (CummulativeReward - Current.Parent.Value) / Current.Parent.VisitedCount;
 
-                // Set the currents to their predicessors.
-                Current = Current.Parent.Parent as ObservationPomcpNode; // Set the current to be the previous observation pomcp node.
-                CurrentState = CurrentState.Predecessor;
-                CurrentDepth -= 1;
-                double CurrentReward = RewardFunction(CurrentState, Problem, CurrentState.GeneratingAction);
-                CummulativeReward = Math.Pow(DiscountFactor, CurrentDepth) * CurrentReward + CummulativeReward;// RewardFunction(CurrentState, Problem, CurrentState.GeneratingAction) + DiscountFactor * CummulativeReward;
+            //BUGBUG;//rewrite here - for observation node - max of children * gamma, for action node - (weighted) average of the children (no discount)
+
+            
+            ObservationPomcpNode opn = Current;
+            ActionPomcpNode apn = null;
+            State s = CurrentState.Predecessor;
+            double dR = Reward;
+            while(opn.Parent != null)
+            {
+                apn = (ActionPomcpNode)opn.Parent;
+                opn = (ObservationPomcpNode)opn.Parent.Parent;
                 
+
+                apn.VisitedCount++;
+                opn.VisitedCount++;
+
+                double dImmediateReward = -1; // problem, we may receive here the goal reward several time, because the reward here is state based. What we really want is belief-based reward. Alternatively, we can move to a goal declaration action.
+                //double dImmediateReward = RewardFunction(s, Problem, apn.Action);
+
+                dR = dImmediateReward + DiscountFactor * dR;
+
+                double dDeltaValue = (dR - apn.Value) / apn.VisitedCount;
+
+                if (apn.Value + dDeltaValue > 100)
+                    Console.Write("*");
+
+                apn.Value += dDeltaValue;
+
                 
             }
-             Current.VisitedCount++;
+
+            /*
+            // Start back propogation phase.
+            //while (Current != Node && !Double.IsNaN(Reward))
+            bool bDone = false;
+            while (!bDone)
+            {
+                // Increase the observation pomcp node's visited count.
+                Current.VisitedCount++;
+
+                if (Current.Parent == null)
+                    bDone = true;
+                else
+                {
+                    // Increase the action pomcp node's visited count.
+                    Current.Parent.VisitedCount++;
+                    Current.Parent.Value += (CummulativeReward - Current.Parent.Value) / Current.Parent.VisitedCount;
+
+                    // Set the currents to their predicessors.
+                    Current = Current.Parent.Parent as ObservationPomcpNode; // Set the current to be the previous observation pomcp node.
+                    CurrentState = CurrentState.Predecessor;
+                    CurrentDepth -= 1;
+                    double CurrentReward = RewardFunction(CurrentState, Problem, CurrentState.GeneratingAction);
+                    CummulativeReward = Math.Pow(DiscountFactor, CurrentDepth) * CurrentReward + CummulativeReward;// RewardFunction(CurrentState, Problem, CurrentState.GeneratingAction) + DiscountFactor * CummulativeReward;
+                }
+            }
+            */
+            //Current.VisitedCount++;
+
+            //sanity check
+            foreach(ActionPomcpNode n in Current.Children.Values)
+            {
+                if (n.Value > Current.Value)
+                    Console.Write("*");
+            }
         }
 
         // Get the next observation pomcp node by action and observation.
         private ObservationPomcpNode GetNextObservationNode(ObservationPomcpNode Node, Action a, List<Predicate> ObservedPredicates)
         {
-            ActionPomcpNode NextActionNode = Node.Childs[a.GetHashCode()] as ActionPomcpNode;
-            ObservationPomcpNode NextObservationNode = NextActionNode.Childs[ActionPomcpNode.GetObservationsHash(ObservedPredicates)] as ObservationPomcpNode;
+            ActionPomcpNode NextActionNode = Node.Children[a.GetHashCode()] as ActionPomcpNode;
+            int iHash = ActionPomcpNode.GetObservationsHash(ObservedPredicates);
+            ObservationPomcpNode NextObservationNode = NextActionNode.Children[iHash] as ObservationPomcpNode;
             return NextObservationNode;
         }
 
+        // Get the next observation pomcp node by action and observation.
+        private ObservationPomcpNode GetNextObservationNode(ObservationPomcpNode Node, Action a, Formula fObserved)
+        {
+            ActionPomcpNode NextActionNode = Node.Children[a.GetHashCode()] as ActionPomcpNode;
+            int iHash = ActionPomcpNode.GetObservationsHash(fObserved);
+            ObservationPomcpNode NextObservationNode = NextActionNode.Children[iHash] as ObservationPomcpNode;
+            return NextObservationNode;
+        }
+
+
+        public static int Expansions = 0;
         private void ExpandNode(ObservationPomcpNode Node)
         {
-            Node.VisitedCount++;
-            PartiallySpecifiedState NodePartialyState = Node.PartiallySpecifiedState;
-            NodePartialyState.GroundAllActions();
-            /*List<PlanningAction> AvailableActionsSnapshot = new List<PlanningAction>(NodePartialyState.AvailableActions);
-            //Apply all observe actions here.
-            foreach (Action action in AvailableActionsSnapshot)
+            //Node.PartiallySpecifiedState.GroundAllActions();
+            //foreach (Action a in Node.PartiallySpecifiedState.AvailableActions)
+
+            //BUGBUG;//do a full expansion during simulate, use only actions that are applicable to a given state, only for the root node check true applicability
+
+            Expansions++;
+
+            foreach (Action a in Node.PartiallySpecifiedState.Problem.GroundedActions)
             {
-                if (action.Effects == null && Node.ParticleFilter.IsApplicable(action))
+                Node.PartiallySpecifiedState.ApplyOffline(a, out bool bPreconditionFailure, out PartiallySpecifiedState psTrueState, out PartiallySpecifiedState psFalseState);
+                if (a.Observe != null && (psTrueState == null || psFalseState == null)) //useless observation over something that we already know
+                    continue;
+                ActionPomcpNode nAction = new ActionPomcpNode(a);
+                if (!bPreconditionFailure)
                 {
-                    NodePartialyState = NodePartialyState.Apply(action, out Formula o);
-                    Node.ParticleFilter = Node.ParticleFilter.Apply(action, o);
-                }
-            }
-            // ReGroud all actions.
-            NodePartialyState.GroundAllActions();
-            Node.PartiallySpecifiedState = NodePartialyState;*/
-
-            // Add all effect actions to childs
-            foreach (Action action in NodePartialyState.AvailableActions)
-            {
-                //if (action.Effects == null) continue;
-                if (NodePartialyState.IsApplicable(action) && Node.ParticleFilter.IsApplicable(action))
-                {
-                   
-                    // Create the action node.
-                    ActionPomcpNode actionPomcpNode = new ActionPomcpNode(Node, action);
-
-                    // Add the action node to the Node childs.
-                    Node.AddActionPomcpNode(actionPomcpNode);
-
-                    Formula observation;
-                    if (action.Observe != null)
+                    if (psTrueState != null)
                     {
-                        // Create all observation nodes for this action node.
-                        PartiallySpecifiedState bsNew = new PartiallySpecifiedState(Node.PartiallySpecifiedState, action);
-                        PartiallySpecifiedState TrueChild = bsNew.Clone();
-                        PartiallySpecifiedState FalseChild = bsNew.Clone();
-                        TrueChild.GeneratingObservation = action.Observe;
-                        FalseChild.GeneratingObservation = action.Observe.Negate();
-                        TrueChild.AddObserved(action.Observe);
-                        FalseChild.AddObserved(action.Observe.Negate());
+                        BelifeParticles PositiveNextParticleFilter = Node.ParticleFilter.Apply(a, a.Observe);
+                        nAction.AddObservationChild(psTrueState, a.Observe, PositiveNextParticleFilter);
 
-                        // Create the particle filters
-                        BelifeParticles PositiveNextParticleFilter = Node.ParticleFilter.Apply(action, action.Observe);
-                        BelifeParticles NegetiveNextParticleFilter = Node.ParticleFilter.Apply(action, action.Observe.Negate());
-
-
-                        // Add the observations nodes to action pomcp node's childs.
-                        actionPomcpNode.AddObservationChilds(TrueChild.GeneratingObservation.GetAllPredicates().ToList(), TrueChild, PositiveNextParticleFilter);
-                        actionPomcpNode.AddObservationChilds(FalseChild.GeneratingObservation.GetAllPredicates().ToList(), FalseChild, NegetiveNextParticleFilter);
                     }
-                    else
+                    if (psFalseState != null)
                     {
-                        List<Predicate> PredicatsObservation = new List<Predicate>();
-                        PartiallySpecifiedState NextState = Node.PartiallySpecifiedState.Apply(action, out observation);
-                        BelifeParticles NextParticleFilter = Node.ParticleFilter.Apply(action, observation);
-                        actionPomcpNode.AddObservationChilds(PredicatsObservation, NextState, NextParticleFilter);
+                        BelifeParticles PositiveNextParticleFilter = Node.ParticleFilter.Apply(a, a.Observe.Negate());
+                        nAction.AddObservationChild(psFalseState, a.Observe.Negate(), PositiveNextParticleFilter);
                     }
-                    
-
-                   
+                    Node.AddActionPomcpNode(nAction);
 
                 }
             }
+            if (Node.PartiallySpecifiedState.GeneratingAction != null &&
+                Node.PartiallySpecifiedState.GeneratingAction.Name == "checking" &&
+                Node.ChildrenSize() == 1)
+                Console.Write("*");
         }
 
         public double MultipleRollouts(BelifeParticles possiboleStates, int currentDepth, int numberOfRepets)
@@ -248,7 +336,8 @@ namespace CPORLib.Algorithms
                 for(int i = 0; i < numberOfRepets; i++)
                 {
                     //Console.WriteLine($"Rollout={Rollout(s, currentDepth)}, ForRollout={ForRollout(s, currentDepth)}");
-                    totalScore += ForRollout(s, currentDepth);
+                    double dScore = ForRollout(s, currentDepth);
+                    totalScore += dScore;
                 }
             }
             return totalScore / (possiboleStates.ViewedStates.Count() * numberOfRepets);
@@ -284,10 +373,22 @@ namespace CPORLib.Algorithms
             double Reward = StartStateReward * Math.Pow(DiscountFactor, currentDepth);
             currentDepth += 1;
 
-            while (!((Math.Pow(DiscountFactor, (double)currentDepth) < DepthThreshold || DiscountFactor == 0) && currentDepth != 0))
+            List<State> lStates = new List<State>();
+            List<Action> lActions = new List<PlanningAction>();
+
+            int iOuterDepth = 0;
+
+            //while (!((Math.Pow(DiscountFactor, (double)currentDepth) < DepthThreshold || DiscountFactor == 0) && currentDepth != 0))
+            while(iOuterDepth < MaxOuterDepth)
             {
-                
+                iOuterDepth++;
+
                 Action RolloutAction = RolloutPolicy.ChooseAction(CurrentState);
+
+                lStates.Add(CurrentState);
+                lActions.Add(RolloutAction);
+
+
                 if (RolloutAction == null) return Double.MinValue;
                 State NextState = CurrentState.Apply(RolloutAction);
                
@@ -310,44 +411,24 @@ namespace CPORLib.Algorithms
             List<Action> Plan = new List<Action>();
             // State CurrentState = Problem.GetInitialBelief().ChooseState(true);
             PartiallySpecifiedState CurrentState = Root.PartiallySpecifiedState.Clone();
-            Console.WriteLine(CurrentState.UnderlyingEnvironmentState);
+            State sUnderlyingState = CurrentState.UnderlyingEnvironmentState;
+            Console.WriteLine(sUnderlyingState);
             if(verbose) Console.WriteLine(string.Join(",", CurrentState.Observed.Where(predicate => !predicate.Negation)));
-            CurrentState.GroundAllActions();
             //while (!Problem.IsGoalState(CurrentState.UnderlyingEnvironmentState))
+            ObservationPomcpNode nCurrent = Root;
+
+            ExpandNode(Root);
             while (!CurrentState.IsGoalState())
             {
-                /*
-                // Apply all observe actions.
-                foreach (Action a in CurrentState.AvailableActions)
-                {
-                    PartiallySpecifiedState observationPSS;
 
-                    if (a.Effects == null)
-                    {
-                        observationPSS = CurrentState.Apply(a, out Formula o);
-                        Root.ParticleFilter = Root.ParticleFilter.Apply(a,o);
-                        observationPSS.m_bsInitialBelief = CurrentState.m_bsInitialBelief;
-                        if (o != null)
-                        {
-                            // Revise belife state
-                            HashSet<int> hsModified = CurrentState.m_bsInitialBelief.ReviseInitialBelief(o, CurrentState);
-                            if (hsModified.Count > 0)
-                            {
-                                observationPSS.PropogateObservedPredicates();
-                            }
+                Search(nCurrent, verbose);
 
-                        }
-                        CurrentState = observationPSS;
-                    }
-                }
-                CurrentState.GroundAllActions();
-                */
+                //PrintTree(nCurrent, "", 0);
 
-                Search(verbose);
                 Action bestValidAction = null;
                 double bestScore = Double.MinValue;
                 ActionPomcpNode bestActionNode = null;
-                foreach (PomcpNode pn in Root.Childs.Values)
+                foreach (PomcpNode pn in nCurrent.Children.Values)
                 {
 
                     ActionPomcpNode actionNode = pn as ActionPomcpNode;
@@ -358,11 +439,24 @@ namespace CPORLib.Algorithms
                         bestScore = actionNode.Value;
                         bestActionNode = actionNode;
                     }
-
+                }
+                //BUGBUG;//problem - sometimes checking is the only child although there should be more children.
+                if (bestValidAction.Name == "checking" && Plan.Count > 0 && !Plan.Last().Name.StartsWith("move"))
+                {
+                    PrintTree(nCurrent, "", 0);
+                    Search(nCurrent, verbose);
                 }
 
-                
+                Plan.Add(bestValidAction);
 
+                State sNextUnderlying = sUnderlyingState.Apply(bestValidAction);
+                Formula observation = sNextUnderlying.Observe(bestValidAction.Observe);
+                ObservationPomcpNode nChild = bestActionNode.GetObservationChild(observation);
+
+                nCurrent = nChild;
+                CurrentState = nCurrent.PartiallySpecifiedState;
+                sUnderlyingState = sNextUnderlying;
+                /*
                 Formula UnusedObservation;
                 PartiallySpecifiedState NextPartiallyState = CurrentState.Apply(bestValidAction, out UnusedObservation);
                 //NextPartiallyState.m_bsInitialBelief = CurrentState.m_bsInitialBelief;
@@ -383,7 +477,7 @@ namespace CPORLib.Algorithms
 
                 Plan.Add(bestValidAction);
                 CurrentState = NextPartiallyState;
-                CurrentState.GroundAllActions();
+                //CurrentState.GroundAllActions();
 
                 ObservationPomcpNode NextObservationPomcpNode = GetNextObservationNode(Root, bestValidAction, PredicatsObservation);
 
@@ -400,11 +494,11 @@ namespace CPORLib.Algorithms
                 Root = NextObservationPomcpNode;
                 Root.PartiallySpecifiedState = CurrentState.Clone();
                 UnrelevantPomcpNodeDestructor(Root, bestValidAction, PredicatsObservation); // replace with observed propagtion.
-
+                */
                 if (verbose)
                 {
                     Console.WriteLine($"Selected action: {bestValidAction.Name}");
-                    Console.WriteLine($"New Underline state is: {string.Join(",", CurrentState.UnderlyingEnvironmentState.Predicates.Where(predicate => !predicate.Negation))}");
+                    Console.WriteLine($"New Underline state is: {string.Join(",", sUnderlyingState.Predicates.Where(predicate => !predicate.Negation))}");
                     Console.WriteLine($"New state is: {string.Join(",", CurrentState.Observed.Where(predicate => !predicate.Negation))}");
                 }
             }
@@ -412,10 +506,42 @@ namespace CPORLib.Algorithms
             return Plan;
         }
 
+        private void PrintTree(PomcpNode nCurrent, string sPath, int iDepth)
+        {
+            if(nCurrent is ObservationPomcpNode opn)           //if(nCurrent.IsLeaf())
+            {
+                sPath += ", " + opn.Observation;
+            }
+            if(nCurrent is ActionPomcpNode apn)
+            {
+                sPath += "," + apn.Action.Name;
+                Console.WriteLine(sPath + " - " + nCurrent.Value + ", " + nCurrent.VisitedCount);
+           }
+            if (iDepth == MaxInnerDepth)
+            {
+                ObservationPomcpNode nLeaf = (ObservationPomcpNode)nCurrent;
+
+                double v = nLeaf.RolloutSum / nLeaf.VisitedCount;
+                Console.WriteLine(sPath + " - " + v + ", " + nCurrent.VisitedCount);
+            }
+            else
+            {
+                foreach (PomcpNode nChild in nCurrent.Children.Values)
+                {
+                    if (nCurrent is ObservationPomcpNode)
+                        PrintTree(nChild, sPath, iDepth);
+                    else
+                    {
+                        PrintTree(nChild, sPath, iDepth + 1);
+                    }
+                }
+            }
+        }
+
         private void UnrelevantPomcpNodeDestructor(ObservationPomcpNode Node, Action bestValidAction, List<Predicate> PredicatsObservation)
         {
             List<int> toRemoveChilds = new List<int>();
-            foreach(KeyValuePair<int, PomcpNode> kvp in Node.Childs)
+            foreach(KeyValuePair<int, PomcpNode> kvp in Node.Children)
             {
                 /*if(kvp.Key != bestValidAction.GetHashCode())
                 {
@@ -425,14 +551,14 @@ namespace CPORLib.Algorithms
             }
             foreach(int key in toRemoveChilds)
             {
-                Node.Childs.Remove(key);
+                Node.Children.Remove(key);
             }
             GC.Collect();
             GC.WaitForPendingFinalizers();
         }
-        private void PrintActionLayer(PomcpNode RootNode)
+        private void PrintActionLayer(PomcpNode nCurrent)
         {
-            foreach(PomcpNode child in Root.Childs.Values)
+            foreach(PomcpNode child in nCurrent.Children.Values)
             {
                 ActionPomcpNode actionChild = child as ActionPomcpNode;
                 Console.WriteLine($"Action: {actionChild.Action.Name}, Value: {actionChild.Value}, Visits: {actionChild.VisitedCount}.");

@@ -1001,19 +1001,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\odedblu\\.nuget\\packages\\": {}
+    "C:\\Users\\shanigu\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\odedblu\\source\\repos\\up-cpor\\TestCPORLib\\RunCPOR.csproj",
+      "projectUniqueName": "D:\\OneDrive\\OneDrive - BGU\\Research\\projects\\AIPlan4EU\\up-cpor-pomcp\\TestCPORLib\\RunCPOR.csproj",
       "projectName": "RunCPOR",
-      "projectPath": "C:\\Users\\odedblu\\source\\repos\\up-cpor\\TestCPORLib\\RunCPOR.csproj",
-      "packagesPath": "C:\\Users\\odedblu\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\odedblu\\Source\\Repos\\up-cpor\\TestCPORLib\\obj\\",
+      "projectPath": "D:\\OneDrive\\OneDrive - BGU\\Research\\projects\\AIPlan4EU\\up-cpor-pomcp\\TestCPORLib\\RunCPOR.csproj",
+      "packagesPath": "C:\\Users\\shanigu\\.nuget\\packages\\",
+      "outputPath": "D:\\OneDrive\\OneDrive - BGU\\Research\\projects\\AIPlan4EU\\up-cpor-pomcp\\TestCPORLib\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\odedblu\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\shanigu\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
@@ -1027,8 +1027,8 @@
         "net6.0": {
           "targetAlias": "net6.0",
           "projectReferences": {
-            "C:\\Users\\odedblu\\source\\repos\\up-cpor\\CPORLib\\CPORLib.csproj": {
-              "projectPath": "C:\\Users\\odedblu\\source\\repos\\up-cpor\\CPORLib\\CPORLib.csproj"
+            "D:\\OneDrive\\OneDrive - BGU\\Research\\projects\\AIPlan4EU\\up-cpor-pomcp\\CPORLib\\CPORLib.csproj": {
+              "projectPath": "D:\\OneDrive\\OneDrive - BGU\\Research\\projects\\AIPlan4EU\\up-cpor-pomcp\\CPORLib\\CPORLib.csproj"
             }
           }
         }
@@ -1068,7 +1068,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.401\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.203\\RuntimeIdentifierGraph.json"
       }
     }
   },

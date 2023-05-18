@@ -21,7 +21,7 @@ namespace CPORLib.Algorithms
 
         public Action SelectBestAction(PomcpNode SelectionNode, State CurrentState)
         {
-            Dictionary<int, PomcpNode> Childrens = SelectionNode.Childs;
+            Dictionary<int, PomcpNode> Childrens = SelectionNode.Children;
             if (Childrens.Count == 0)
             {
                 throw new ArgumentException("Childrens is empty, could not select best action.");
@@ -45,7 +45,7 @@ namespace CPORLib.Algorithms
                 {
                     ChildrenUCBScore = Children.Value + C * Math.Sqrt(Math.Log(SelectionNode.VisitedCount) / (double)Children.VisitedCount);
                 }
-                if (MaxUCBValue < ChildrenUCBScore && CurrentState.AvailableActions.Contains(((ActionPomcpNode)Children).Action))
+                if (MaxUCBValue < ChildrenUCBScore) // && CurrentState.AvailableActions.Contains(((ActionPomcpNode)Children).Action))
                 {
                     MaxUCBValue = ChildrenUCBScore;
                     BestAction = ((ActionPomcpNode)Children).Action;

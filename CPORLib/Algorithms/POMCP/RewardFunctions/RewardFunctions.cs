@@ -16,7 +16,7 @@ namespace CPORLib.Algorithms
             //if (state == null) return Double.MinValue;
             if (state != null && p.IsGoalState(state))
             {
-                return 5.0;
+                return 100.0;
             }
             else
             {

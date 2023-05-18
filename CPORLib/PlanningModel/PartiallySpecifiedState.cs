@@ -16,7 +16,7 @@ namespace CPORLib.PlanningModel
     {
         public int tmpId = 0;
         public HashSet<Action> ActionsWithConditionalEffect = null;
-        public HashSet<Predicate> mayChanged = null;
+        //public HashSet<Predicate> mayChanged = null;
         public Dictionary<GroundedPredicate, Formula> regressionFormula = null;
         public int countOfActionFromRoot = 0;
         public GenericArraySet<Predicate> Observed { get { return m_lObserved; } }
@@ -95,7 +95,7 @@ namespace CPORLib.PlanningModel
             countOfActionFromRoot = original.countOfActionFromRoot;
             tmpId = original.tmpId;
             ActionsWithConditionalEffect = original.ActionsWithConditionalEffect;
-            mayChanged = original.mayChanged;
+            //mayChanged = original.mayChanged;
 
             if (original.regressionFormula != null)
                 regressionFormula = new Dictionary<GroundedPredicate, Formula>(original.regressionFormula);
@@ -287,7 +287,7 @@ namespace CPORLib.PlanningModel
             m_sPredecessor = null;
             m_lObserved = new GenericArraySet<Predicate>(bs.Observed);
             AvailableActions = new List<Action>();
-            UnderlyingEnvironmentState = bs.ChooseState(true);
+            UnderlyingEnvironmentState = bs.ChooseState(true, true);
             m_bsInitialBelief = bs;
             ChildCount = 0;
 
@@ -1259,10 +1259,7 @@ namespace CPORLib.PlanningModel
             if (psTrueState != null)
             {
                 psTrueState.tmpId = this.tmpId;
-                if (mayChanged != null)
-                {
-                    psTrueState.mayChanged = new HashSet<Predicate>();
-                }
+                
 
                 if (ActionsWithConditionalEffect != null)
                 {
@@ -1274,10 +1271,7 @@ namespace CPORLib.PlanningModel
             if (psFalseState != null)
             {
                 psFalseState.tmpId = this.tmpId;
-                if (mayChanged != null)
-                {
-                    psFalseState.mayChanged = new HashSet<Predicate>();
-                }
+                
 
                 if (ActionsWithConditionalEffect != null)
                 {
@@ -1861,7 +1855,6 @@ namespace CPORLib.PlanningModel
             if (Problem.Domain.ContainsNonDeterministicActions)
             {
                 dVisitedStates[new PartiallySpecifiedState(this)] = this;
-                mayChanged = new HashSet<Predicate>();
                 ActionsWithConditionalEffect = new HashSet<Action>();
             }
         }

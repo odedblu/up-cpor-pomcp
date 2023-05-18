@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using CPORLib.PlanningModel;
 using CPORLib.LogicalUtilities;
 using Action = CPORLib.PlanningModel.PlanningAction;
+using CPORLib.Tools;
 
 namespace CPORLib.Algorithms
 {
@@ -15,6 +16,8 @@ namespace CPORLib.Algorithms
         public List<Action> GroundedActuationActions;
 
         public Dictionary<GroundedPredicate, HashSet<int>> ActionPreconditions;
+
+        public List<int> ConditionalActions;
         public Dictionary<State, HashSet<Action>> StateResultCache { get; set; }
 
         public Domain Domain;
@@ -29,11 +32,16 @@ namespace CPORLib.Algorithms
             ActionPreconditions = new Dictionary<GroundedPredicate, HashSet<int>>();
             StateResultCache = new Dictionary<State, HashSet<Action>>();
             int cActions = 0;
+
+            ConditionalActions = new List<int>();
+            ActionPreconditions[Utilities.TRUE_PREDICATE] = new HashSet<int>();
+
             foreach (Action a in AllGroundedActions)
             {
                 if (a.Observe == null)
                 {
                     Action aTag = new Action(a.Name);
+
                     if (a.Preconditions != null)
                     {
                         CompoundFormula cfPreconditions = new CompoundFormula("and");
@@ -49,9 +57,15 @@ namespace CPORLib.Algorithms
                         }
                         aTag.Preconditions = cfPreconditions;
                     }
+                    else
+                    {
+                        ActionPreconditions[Utilities.TRUE_PREDICATE].Add(cActions);
+                    }
                     aTag.Effects = a.Effects;
                     aTag.Observe = a.Observe;
                     GroundedActuationActions.Add(aTag);
+                    if (aTag.Effects != null && a.Effects.ContainsCondition())
+                        ConditionalActions.Add(cActions);
                     cActions++;
                 }
             }
@@ -78,7 +92,8 @@ namespace CPORLib.Algorithms
                     State NextState = s.Apply(action);
                     if (NextState != null)
                     {
-                        ActionsScores.Add(action, ComputeHAdd(NextState));
+                        double dH = ComputeHAdd(NextState);
+                        ActionsScores.Add(action, dH);
                     }
                 }
 
@@ -150,7 +165,9 @@ namespace CPORLib.Algorithms
             while (!bDone)
             {
                 HashSet<int> hsActions = new HashSet<int>();
-                foreach (GroundedPredicate gp in lLevels.Last())
+                foreach(int iAction in ActionPreconditions[Utilities.TRUE_PREDICATE])
+                    hsActions.Add(iAction);
+                foreach (GroundedPredicate gp in hsAll)
                 {
                     if (ActionPreconditions.ContainsKey(gp))
                     {
@@ -161,23 +178,27 @@ namespace CPORLib.Algorithms
                     }
                 }
                 HashSet<GroundedPredicate> hsNextLevel = new HashSet<GroundedPredicate>();
+                hsActions.UnionWith(ConditionalActions);
                 foreach (int iAction in hsActions)
                 {
                     Action a = GroundedActuationActions[iAction];
-                    ISet<Predicate> hsPreconditions = a.Preconditions.GetAllPredicates();
 
                     bool bContainsAll = true;
-                    foreach (GroundedPredicate gp in hsPreconditions)
-                        if (!hsAll.Contains(gp))
-                        {
-                            bContainsAll = false;
-                            break;
-                        }
-
+                    if (a.Preconditions != null)
+                    {
+                        ISet<Predicate> hsPreconditions = a.Preconditions.GetAllPredicates();
+                        foreach (GroundedPredicate gp in hsPreconditions)
+                            if (!hsAll.Contains(gp))
+                            {
+                                bContainsAll = false;
+                                break;
+                            }
+                    }
                     if (bContainsAll)
                     {
                         ISet<Predicate> hsAllPredicates = new HashSet<Predicate>(hsAll);
-                        Formula cf = a.GetApplicableEffects(hsAllPredicates, true);
+                        
+                        Formula cf = a.GetApplicableEffects(hsAllPredicates, false);
                         foreach (GroundedPredicate gpEffect in cf.GetAllPredicates())
                         {
                             if (!hsAll.Contains(gpEffect))

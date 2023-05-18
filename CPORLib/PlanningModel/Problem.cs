@@ -24,6 +24,7 @@ namespace CPORLib.PlanningModel
         public string MetricStatement { get; private set; }
         private HashSet<Predicate> m_lInitiallyUnknown;
 
+        public List<PlanningAction> GroundedActions;
 
         private Dictionary<GroundedPredicate, HashSet<GroundedPredicate>> m_dRelevantPredicates;
 
@@ -565,7 +566,7 @@ namespace CPORLib.PlanningModel
 
             //write hidden state
             sw.WriteLine("(:hidden");
-            State s = bsInitial.ChooseState(false);
+            State s = bsInitial.ChooseState(false, true);
             foreach (GroundedPredicate gp in s.Predicates)
             {
                 if (!m_lKnown.Contains(gp))

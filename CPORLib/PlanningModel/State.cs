@@ -48,7 +48,7 @@ namespace CPORLib.PlanningModel
                 FunctionValues[sFunction] = 0.0;
             }
             History = new List<string>();
-            History.Add(ToString());
+            //History.Add(ToString());
         }
         public State(State sPredecessor)
             : this(sPredecessor.Problem)
@@ -398,6 +398,8 @@ namespace CPORLib.PlanningModel
 
         public Formula Observe(Formula fObserve)
         {
+            if (fObserve == null)
+                return null;
             if (fObserve is PredicateFormula)
             {
                 Predicate pObserve = ((PredicateFormula)fObserve).Predicate;

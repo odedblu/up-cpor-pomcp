@@ -13,7 +13,7 @@ namespace CPORLib.Algorithms
     {
         public List<Action> SolveII(Problem p, Domain d)
         {
-            State sStart = p.GetInitialBelief().ChooseState(true);
+            State sStart = p.GetInitialBelief().ChooseState(true,true);
             List<State> lOpenList = new List<State>();
             lOpenList.Add(sStart);
             State sCurrent = null, sNext = null;
@@ -60,7 +60,7 @@ namespace CPORLib.Algorithms
 
         public List<Action> ManualSolve(Problem p, Domain d, bool bApplyAllMerges)
         {
-            State sStart = p.GetInitialBelief().ChooseState(true);
+            State sStart = p.GetInitialBelief().ChooseState(true, true);
             State sCurrent = null, sNext = null;
             Dictionary<State, Action> dMapStateToGeneratingAction = new Dictionary<State, Action>();
             dMapStateToGeneratingAction[sStart] = null;
@@ -121,7 +121,7 @@ namespace CPORLib.Algorithms
 
         public List<Action> RadnomSolve(Problem p, Domain d)
         {
-            State sStart = p.GetInitialBelief().ChooseState(true);
+            State sStart = p.GetInitialBelief().ChooseState(true, true);
             List<Action> lActions = d.GroundAllActions(sStart.Predicates, false);
             int iRnd = RandomGenerator.Next(lActions.Count);
             List<Action> lPlan = new List<Action>();
@@ -131,7 +131,7 @@ namespace CPORLib.Algorithms
 
         public List<Action> Solve(Problem p, Domain d)
         {
-            State sStart = p.GetInitialBelief().ChooseState(true);
+            State sStart = p.GetInitialBelief().ChooseState(true, true);
             List<Action> lActions = new List<Action>();
             Action aClear = d.GroundActionByName(new string[] { "clear-all", "" }, sStart.Predicates, false);
             sStart = sStart.Apply(aClear);
@@ -146,7 +146,7 @@ namespace CPORLib.Algorithms
 
         public List<Action> SolveOld(Problem p, Domain d)
         {
-            State sStart = p.GetInitialBelief().ChooseState(true);
+            State sStart = p.GetInitialBelief().ChooseState(true, true);
             List<Action> lActions = new List<Action>();
             State sObserved = ObserveAll(sStart, lActions, d);
             State sFixed = ApplyAxiom(sObserved, lActions, d);
