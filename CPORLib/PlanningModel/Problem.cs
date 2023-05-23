@@ -24,7 +24,18 @@ namespace CPORLib.PlanningModel
         public string MetricStatement { get; private set; }
         private HashSet<Predicate> m_lInitiallyUnknown;
 
-        public List<PlanningAction> GroundedActions;
+        public List<PlanningAction> GroundedActions
+        {
+            get
+            {
+                if(m_lGroundedActions == null)
+                {
+                    m_lGroundedActions = Domain.GroundAllActions(this, false);
+                }
+                return m_lGroundedActions;
+            }
+        }
+        public List<PlanningAction> m_lGroundedActions;
 
         private Dictionary<GroundedPredicate, HashSet<GroundedPredicate>> m_dRelevantPredicates;
 

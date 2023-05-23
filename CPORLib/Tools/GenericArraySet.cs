@@ -8,16 +8,11 @@ using System.Threading;
 namespace CPORLib.Tools
 {
  
-    public class GenericArraySet<T> :  ISet<T>
+    public class GenericArraySet<T> :  ISet<T> where T: Indexed<T>
     {
-        public static Dictionary<T, int> Indexes = new Dictionary<T, int>();
-        public static int CountIndexes = 0;
+
         public static int Max = 10000;
-        public static void Reset()
-        {
-            Indexes = new Dictionary<T, int>();
-            CountIndexes = 0;
-        }
+        
 
 
 
@@ -53,34 +48,11 @@ namespace CPORLib.Tools
             throw new NotImplementedException();
         }
 
-        private int GetIndex(T t)
-        {
-            
-            /*if (t is GroundedPredicate gp)
-            {
-                if(gp.Index !=  -1)
-                    return gp.Index;
-            }*/
-           
-            if (!Indexes.TryGetValue(t, out int index))
-            {
-                index = CountIndexes;
-                Indexes[t] = index;
-                CountIndexes++;
-                
-                if (t is GroundedPredicate gp1)
-                {
-                    gp1.Index = index;
-                }
-                
-            }
-            return index;
-            
-        }
+        
 
         public bool Add(T t)
         {
-            int index = GetIndex(t);
+            int index = t.Index;
             if (All[index] == false)
             {
                 All[index] = true;
@@ -93,7 +65,7 @@ namespace CPORLib.Tools
 
         private bool RemoveImpl(T t)
         {
-            int index = GetIndex(t);
+            int index = t.Index;
             if (All[index] == true)
             {
                 All[index] = false;
@@ -121,7 +93,7 @@ namespace CPORLib.Tools
                 return false;
             foreach (T t in Items)
             {
-                int index = Indexes[t];
+                int index = t.Index;
                 if (other.All[index] == false)
                     return false;
             }
@@ -137,7 +109,7 @@ namespace CPORLib.Tools
 
         bool ICollection<T>.Contains(T t)
         {
-            int index = GetIndex(t);
+            int index = t.Index;
 
             return All[index];
         }

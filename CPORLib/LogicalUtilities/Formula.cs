@@ -34,11 +34,15 @@ namespace CPORLib.LogicalUtilities
         public abstract void GetAllEffectPredicates(ISet<Predicate> lConditionalPredicates, ISet<Predicate> lNonConditionalPredicates);
         public abstract Formula ToCNF();
 
+        private ISet<Predicate> m_lPredicates = null;
         public ISet<Predicate> GetAllPredicates()
         {
-            ISet<Predicate> lPredicates = new HashSet<Predicate>();
-            GetAllPredicates(lPredicates);
-            return lPredicates;
+            if (m_lPredicates == null)
+            {
+                m_lPredicates = new HashSet<Predicate>();
+                GetAllPredicates(m_lPredicates);
+            }
+            return m_lPredicates;
         }
 
         public abstract bool ContainsCondition();

@@ -14,8 +14,10 @@ namespace CPORLib.PlanningModel
         
         //protected HashSet<Predicate> m_lPredicates;
 
-        protected HashSet<Predicate> m_lAlwaysTrue;
-        protected HashSet<Predicate> m_lChangingPredicates;
+        protected ISet<Predicate> m_lAlwaysTrue;
+        protected ISet<Predicate> m_lChangingPredicates;
+
+        public ISet<Predicate> ChangingPredicates { get { return m_lChangingPredicates; } }
 
         public List<Action> AvailableActions { get; set; }
         public State Predecessor { set; get; }
@@ -35,8 +37,8 @@ namespace CPORLib.PlanningModel
             Problem = p;
             Predecessor = null;
             //m_lPredicates = new HashSet<Predicate>();
-            m_lAlwaysTrue = new HashSet<Predicate>();
-            m_lChangingPredicates = new HashSet<Predicate>();
+            m_lAlwaysTrue = new GenericArraySet<Predicate>();
+            m_lChangingPredicates = new GenericArraySet<Predicate>();
             AvailableActions = new List<Action>();
             MaintainNegations = true;
             ID = STATE_COUNT++;

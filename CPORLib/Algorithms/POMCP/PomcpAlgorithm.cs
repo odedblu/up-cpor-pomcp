@@ -36,7 +36,7 @@ namespace CPORLib.Algorithms
 
 
         public PomcpAlgorithm(double discountFactor, double depthThreshold, 
-                              int simulationsThreshold, Problem problem, ObservationPomcpNode root,
+                              int simulationsThreshold, Problem problem,
                               IActionSelectPolicy finalActionSelectPolicy, IActionSelectPolicy actionSelectPolicy, IRolloutPolicy rolloutPolicy, 
                               Func<State, Problem,Action, double> rewardFunction,
                               bool ExactBelifeStateRepresentation=false) : base(problem.Domain, problem)
@@ -49,7 +49,7 @@ namespace CPORLib.Algorithms
             DepthThreshold = depthThreshold;
             SimulationsThreshold = simulationsThreshold;
             Problem = problem;
-            Root = root;
+            Root = new ObservationPomcpNode(new PartiallySpecifiedState(problem.GetInitialBelief()), null); 
             ActionSelectPolicy = actionSelectPolicy;
             FinalActionSelectPolicy = finalActionSelectPolicy;
             RolloutPolicy = rolloutPolicy;

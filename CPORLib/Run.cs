@@ -1,4 +1,5 @@
 ﻿using CPORLib.Algorithms;
+using CPORLib.LogicalUtilities;
 using CPORLib.Parsing;
 using CPORLib.PlanningModel;
 using CPORLib.Tools;
@@ -86,6 +87,8 @@ namespace CPORLib
             Problem problem = parser.ParseProblem(sProblemFile, domain);
             Debug.WriteLine("Done reading domain and problem");
 
+
+
             double EXPLORATION_FACTOR_UCB = 50.0;
             double DISCOUNT_FACTOR = 0.95;
             double DEPTH_THRESHOLD = 0.55;
@@ -98,8 +101,8 @@ namespace CPORLib
 
 
 
-            ObservationPomcpNode root = new ObservationPomcpNode(new PartiallySpecifiedState(problem.GetInitialBelief()), null);
-            PomcpAlgorithm pomcpAlgorithm = new PomcpAlgorithm(DISCOUNT_FACTOR, DEPTH_THRESHOLD, SIMULATIONS, problem, root, FinalActionSelectPolicy, ActionSelectPolicy, RolloutPolicy, RewardFunctions.GeneralReward);
+            //ObservationPomcpNode root = new ObservationPomcpNode(new PartiallySpecifiedState(problem.GetInitialBelief()), null);
+            PomcpAlgorithm pomcpAlgorithm = new PomcpAlgorithm(DISCOUNT_FACTOR, DEPTH_THRESHOLD, SIMULATIONS, problem, FinalActionSelectPolicy, ActionSelectPolicy, RolloutPolicy, RewardFunctions.GeneralReward);
             List<PlanningAction> plan = pomcpAlgorithm.FindPlan(true);
             foreach (PlanningAction action in plan)
             {

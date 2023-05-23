@@ -1,11 +1,12 @@
 ﻿
+using CPORLib.Tools;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace CPORLib.LogicalUtilities
 {
-    public abstract class Predicate : IComparable<Predicate>
+    public abstract class Predicate : Indexed<Predicate>, IComparable<Predicate>
     {
 
 

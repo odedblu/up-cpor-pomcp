@@ -12,6 +12,8 @@ namespace CPORLib.Algorithms
 {
     internal class GuyHaddHeuristuc: IRolloutPolicy
     {
+        public ISet<Predicate> AlwaysConstant;
+
         public List<Action> AllGroundedActions;
         public List<Action> GroundedActuationActions;
 
@@ -23,18 +25,39 @@ namespace CPORLib.Algorithms
         public Domain Domain;
         public Problem Problem;
 
+        private bool m_bInitialized;
+
         public GuyHaddHeuristuc(Domain d, Problem p)
         {
             Domain = d;
             Problem = p;
-            AllGroundedActions = Domain.GroundAllActions(p, false);
+            m_bInitialized = false;
+        }
+
+        public void Init()
+        {
+            if (m_bInitialized)
+                return;
+
+            AllGroundedActions = Problem.GroundedActions;
             GroundedActuationActions = new List<Action>();
             ActionPreconditions = new Dictionary<GroundedPredicate, HashSet<int>>();
             StateResultCache = new Dictionary<State, HashSet<Action>>();
+
+
             int cActions = 0;
 
             ConditionalActions = new List<int>();
             ActionPreconditions[Utilities.TRUE_PREDICATE] = new HashSet<int>();
+
+
+            AlwaysConstant = new GenericArraySet<Predicate>();
+            foreach (GroundedPredicate gp in Problem.Known)
+            {
+                if (!gp.Negation && Domain.AlwaysConstant(gp))
+                    AlwaysConstant.Add(gp);
+            }
+
 
             foreach (Action a in AllGroundedActions)
             {
@@ -69,10 +92,13 @@ namespace CPORLib.Algorithms
                     cActions++;
                 }
             }
+            m_bInitialized = true;
         }
 
         public Action ChooseAction(State s)
         {
+            Init();
+
             HashSet<Action> bestActions = new HashSet<Action>();
             if (!StateResultCache.ContainsKey(s))
             {
@@ -141,16 +167,20 @@ namespace CPORLib.Algorithms
 
         public double ComputeHAdd(State s)
         {
-            HashSet<GroundedPredicate> hsAll = new HashSet<GroundedPredicate>();
-            foreach (GroundedPredicate gp in s.Predicates)
-                hsAll.Add(gp);
-            List<HashSet<GroundedPredicate>> lLevels = new List<HashSet<GroundedPredicate>>();
-            lLevels.Add(new HashSet<GroundedPredicate>(hsAll));
+            Init();
+
+            ISet<Predicate> hsAllChanging = new GenericArraySet<Predicate>();
+            foreach (GroundedPredicate gp in s.ChangingPredicates)
+                hsAllChanging.Add(gp);
+            ISet<Predicate> hsAll = new UnifiedSet<Predicate>(AlwaysConstant, hsAllChanging);
+
+            List<ISet<Predicate>> lLevels = new List<ISet<Predicate>>();
+            lLevels.Add(new GenericArraySet<Predicate>(hsAllChanging));
             int cLevels = 0;
             bool bDone = false;
             Dictionary<GroundedPredicate, int> dGoalCosts = new Dictionary<GroundedPredicate, int>();
 
-            HashSet<GroundedPredicate> hsGoal = new HashSet<GroundedPredicate>();
+            ISet<Predicate> hsGoal = new GenericArraySet<Predicate>();
             bDone = true;
             foreach (GroundedPredicate gp in Problem.Goal.GetAllPredicates())
             {
@@ -177,7 +207,7 @@ namespace CPORLib.Algorithms
                         }
                     }
                 }
-                HashSet<GroundedPredicate> hsNextLevel = new HashSet<GroundedPredicate>();
+                ISet<Predicate> hsNextLevel = new GenericArraySet<Predicate>();
                 hsActions.UnionWith(ConditionalActions);
                 foreach (int iAction in hsActions)
                 {
@@ -196,9 +226,8 @@ namespace CPORLib.Algorithms
                     }
                     if (bContainsAll)
                     {
-                        ISet<Predicate> hsAllPredicates = new HashSet<Predicate>(hsAll);
-                        
-                        Formula cf = a.GetApplicableEffects(hsAllPredicates, false);
+                       
+                        Formula cf = a.GetApplicableEffects(hsAll, false);
                         foreach (GroundedPredicate gpEffect in cf.GetAllPredicates())
                         {
                             if (!hsAll.Contains(gpEffect))
@@ -213,7 +242,7 @@ namespace CPORLib.Algorithms
                 }
                 foreach (GroundedPredicate gp in hsNextLevel)
                 {
-                    hsAll.Add(gp);
+                    hsAllChanging.Add(gp);
                 }
                 lLevels.Add(hsNextLevel);
                 cLevels++;
@@ -222,7 +251,6 @@ namespace CPORLib.Algorithms
                     bDone = true;
                 if (dGoalCosts.Count == hsGoal.Count)
                     bDone = true;
-
             }
 
             if (hsGoal.Count != dGoalCosts.Count)

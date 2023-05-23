@@ -59,9 +59,9 @@ namespace CPORLib.Algorithms
             Problem.PrepareForPlanning();
 
             FF.ClearEfficientMemory();
-
-            GenericArraySet<Predicate>.Reset();
+            Indexed<Predicate>.Reset();
             GroundedPredicateFactory.Reset();
+
         }
 
 
