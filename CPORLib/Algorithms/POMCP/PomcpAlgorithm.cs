@@ -186,7 +186,6 @@ namespace CPORLib.Algorithms
             while (!Current.IsLeaf())
             {
 
-                FilterActions(Current, CurrentState);
 
                 // Select next action to preform inside the tree.
                 Action NextAction = ActionSelectPolicy.SelectBestAction(Current, CurrentState);
@@ -229,6 +228,9 @@ namespace CPORLib.Algorithms
                     //Console.WriteLine("Got max depth on search");
                     break;
                 }
+
+                FilterActions(Current, CurrentState);
+
             }
 
             // Expand node.
@@ -479,6 +481,7 @@ namespace CPORLib.Algorithms
 
                 if (RolloutAction == null) return Double.MinValue;
                 State NextState = CurrentState.Apply(RolloutAction);
+                if (NextState == null) return Double.MinValue;
                
                 double CurrentReward = RewardFunction(NextState, Problem, RolloutAction);
                 Reward += Math.Pow(DiscountFactor, currentDepth) * CurrentReward;

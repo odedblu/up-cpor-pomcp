@@ -2116,7 +2116,7 @@ namespace CPORLib.LogicalUtilities
             foreach (Formula f in Operands)
             {
                 Formula fRemoved = f.RemoveNegations();
-                if (f != null)
+                if (fRemoved != null)
                 {
                     cf.AddOperand(fRemoved);
                 }
