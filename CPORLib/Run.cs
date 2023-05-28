@@ -94,7 +94,8 @@ namespace CPORLib
             double DEPTH_THRESHOLD = 0.55;
             int SIMULATIONS = 500;
 
-            IRolloutPolicy RolloutPolicy = new GuyHaddHeuristuc(domain, problem);
+            //IRolloutPolicy RolloutPolicy = new GuyHaddHeuristuc(domain, problem);
+            IRolloutPolicy RolloutPolicy = new SDRwithHAddHeuristic();
 
             IActionSelectPolicy ActionSelectPolicy = new UCBValueActionSelectPolicy(EXPLORATION_FACTOR_UCB);
             IActionSelectPolicy FinalActionSelectPolicy = new MaxValueActionSelectPolicy();

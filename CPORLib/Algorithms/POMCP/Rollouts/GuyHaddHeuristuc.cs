@@ -107,7 +107,7 @@ namespace CPORLib.Algorithms
                 List<Action> validActions = new List<Action>();
                 foreach (Action a in GroundedActuationActions)
                 {
-                    if (a.Preconditions == null || a.Preconditions.IsTrue(s.Predicates))
+                    if (a.Preconditions == null || a.Preconditions.IsTrue(s.Predicates, false))
                     {
                         validActions.Add(a);
                     }

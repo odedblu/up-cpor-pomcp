@@ -245,6 +245,11 @@ namespace CPORLib.Algorithms
             
 
             // Finished run inside the tree, now do rollout.
+            if(RolloutPolicy is SDRwithHAddHeuristic SDRRolloutPolicy)
+            {
+                SDRRolloutPolicy.UpdateTaggedDomainAndProblem(Current.PartiallySpecifiedState, false);
+            }
+
             double Reward = ForRollout(CurrentState, CurrentDepth);
             //double Reward = MultipleRollouts(Current.ParticleFilter, CurrentDepth, 1);
             Current.RolloutSum += Reward;
