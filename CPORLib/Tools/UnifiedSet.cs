@@ -19,10 +19,10 @@ namespace CPORLib.Tools
             Count = 0;
         }
 
-        public UnifiedSet(ISet<T> s1, ISet<T> s2) : this()
+        public UnifiedSet(params ISet<T>[] sets) : this()
         {
-            Add(s1);
-            Add(s2);
+            foreach(ISet<T> s in sets)
+                Add(s);
         }
 
         public void Add(ISet<T> s)

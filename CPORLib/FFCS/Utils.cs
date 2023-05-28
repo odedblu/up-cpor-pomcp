@@ -1,4 +1,5 @@
 ﻿using CPORLib.Algorithms;
+using CPORLib.Tools;
 using Microsoft.VisualBasic;
 using System;
 using System.Collections;
@@ -128,10 +129,9 @@ namespace CPORLib.FFCS
         }
         //public static int  GET_CONSTANT( val, pointer ) ( val >= 0 ) ? val : pointer.inst_table[DECODE_VAR( val )]
 
-        static Random rnd = new Random();
         public static int random(int max)
         {
-            return rnd.Next(max);
+            return RandomGenerator.Next(max);
         }
 
         public static void Exit(int iCode)

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using CPORLib.PlanningModel;
 using CPORLib.LogicalUtilities;
 using Action = CPORLib.PlanningModel.PlanningAction;
+using CPORLib.Tools;
 
 namespace CPORLib.Algorithms
 {
@@ -41,15 +42,15 @@ namespace CPORLib.Algorithms
 
             
             IEnumerable<Action> PossibleActions = ActionScores.Where(pair => pair.Value == MaxActionGoalPredicatesCount).Select(pair => pair.Key);
-            Random random = new Random();
+
             int BestActionsCount = PossibleActions.Count();
             int SelectedIndex;
             if (BestActionsCount != 0)
             {
-                SelectedIndex = random.Next(0, BestActionsCount);
+                SelectedIndex = RandomGenerator.Next(0, BestActionsCount);
                 return PossibleActions.ElementAt(SelectedIndex);
             }
-            SelectedIndex = random.Next(0, ActionScores.Count());
+            SelectedIndex = RandomGenerator.Next(0, ActionScores.Count());
             return ActionScores.ElementAt(SelectedIndex).Key;
         }
     }

@@ -8,6 +8,10 @@ namespace CPORLib.Algorithms
 {
     internal abstract class PomcpNode
     {
+        public static int NodeCount = 0;
+
+        public int ID = NodeCount++;
+
         public PomcpNode Parent;
         public Dictionary<int, PomcpNode> Children;
         public int VisitedCount;

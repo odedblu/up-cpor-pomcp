@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using CPORLib.PlanningModel;
 using CPORLib.LogicalUtilities;
 using Action = CPORLib.PlanningModel.PlanningAction;
-
+using CPORLib.Tools;
 
 namespace CPORLib.Algorithms
 {
@@ -67,8 +67,7 @@ namespace CPORLib.Algorithms
                 StateProbabilities.Add(new Tuple<double, State>(cummlativeProbability + StateProbability, stateFrequency.Key));
                 cummlativeProbability += StateProbability;
             }
-            Random random = new Random();
-            double RandomRoll = random.NextDouble();
+            double RandomRoll = RandomGenerator.NextDouble();
             foreach (var StateProbability in StateProbabilities)
             {
                 if (StateProbability.Item1 > RandomRoll)

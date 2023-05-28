@@ -25,5 +25,10 @@ namespace CPORLib.Tools
         {
             return m_rnd.NextDouble();
         }
+
+        internal static int Next(int min, int max)
+        {
+            return m_rnd.Next(min, max);
+        }
     }
 }

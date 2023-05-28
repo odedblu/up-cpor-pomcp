@@ -28,6 +28,9 @@ public class Program
         gcmd_line.debug = 0;
         RunTest("wumpus05", bOnline);
 
+        RunTest("blocks3", bOnline);
+
+
         //RunTest("localize5noisy", bOnline);
         RunTest("doors5", bOnline);
        RunTest("localize5", bOnline);
@@ -48,7 +51,6 @@ public class Program
         
         
         
-        RunTest("blocks3", bOnline);
 
               
         RunTest("colorballs2-2", bOnline);

@@ -16,8 +16,11 @@ namespace CPORLib.PlanningModel
         public Formula Goal { get; set; }
         public Domain Domain { get; private set; }
         private HashSet<Predicate> m_lKnown;
-        private List<CompoundFormula> m_lHidden;
-        public IEnumerable<CompoundFormula> Hidden { get { return m_lHidden; } }
+
+        private List<CompoundFormula> m_lHiddenFormulas;
+
+
+        public IEnumerable<CompoundFormula> HiddenFormulas { get { return m_lHiddenFormulas; } }
         public ISet<Predicate> Known { get { return m_lKnown; } }
         public ISet<Predicate> Unknown { get { return m_lInitiallyUnknown; } }
         public List<PlanningAction> ReasoningActions { get; private set; }
@@ -45,13 +48,14 @@ namespace CPORLib.PlanningModel
         {
             Domain = d;
             m_lKnown = new HashSet<Predicate>();
-            m_lHidden = new List<CompoundFormula>();
+            m_lHiddenFormulas = new List<CompoundFormula>();
             Name = sName;
             Goal = null;
             ReasoningActions = new List<PlanningAction>();
             m_dRelevantPredicates = new Dictionary<GroundedPredicate, HashSet<GroundedPredicate>>();
             m_lInitiallyUnknown = new HashSet<Predicate>();
             DeadEndList = new List<Formula>();
+
         }
 
         public void AddKnown(Predicate p)
@@ -86,7 +90,7 @@ namespace CPORLib.PlanningModel
 
             }
 
-            m_lHidden.Add(cf);
+            m_lHiddenFormulas.Add(cf);
         }
         public override string ToString()
         {
@@ -98,7 +102,7 @@ namespace CPORLib.PlanningModel
                 s += " " + p;
             s+= ")\n";
             
-            s += "(hidden " + Utilities.ListToString(m_lHidden) + ")\n)\n";
+            s += "(hidden " + Utilities.ListToString(m_lHiddenFormulas) + ")\n)\n";
             s+= "(goal " + Goal + ")\n";
             s += ")";
             return s;
@@ -113,7 +117,7 @@ namespace CPORLib.PlanningModel
             // List<GroundedPredicate> lGrounded = Domain.GroundAllPredicates(lKnownPredicates);
             ISet<Predicate> lGrounded = Domain.GroundAllPredicates();
             ISet<Predicate> lUnknown = new HashSet<Predicate>();
-            foreach (Formula f in m_lHidden)
+            foreach (Formula f in m_lHiddenFormulas)
                 f.GetAllPredicates(lUnknown);
             foreach (GroundedPredicate gp in lGrounded)
             {
@@ -135,7 +139,7 @@ namespace CPORLib.PlanningModel
         public void AddReasoningActions()
         {
             ReasoningActions = new List<PlanningAction>();
-            foreach (CompoundFormula cf in m_lHidden)
+            foreach (CompoundFormula cf in m_lHiddenFormulas)
             {
                 if (cf.Operator == "oneof")
                 {
@@ -187,7 +191,7 @@ namespace CPORLib.PlanningModel
                 else
                     bs.AddObserved(p);
             }
-            foreach (CompoundFormula cf in m_lHidden)
+            foreach (CompoundFormula cf in m_lHiddenFormulas)
             {
                 /*
                 Formula fReduced = cf.Reduce(m_lKnown);
@@ -209,7 +213,7 @@ namespace CPORLib.PlanningModel
         public void WriteReasoningActions(StreamWriter sw, bool bRequireP)
         {
             int cActions = 0;
-            foreach (CompoundFormula cfHidden in m_lHidden)
+            foreach (CompoundFormula cfHidden in m_lHiddenFormulas)
             {
                 cActions = WriteReasoningActions(sw, cfHidden, cActions, bRequireP);
             }
@@ -221,7 +225,7 @@ namespace CPORLib.PlanningModel
         public void WriteReasoningAxioms(StreamWriter sw)
         {
             int cActions = 0;
-            foreach (CompoundFormula cfHidden in m_lHidden)
+            foreach (CompoundFormula cfHidden in m_lHiddenFormulas)
             {
                 cActions = WriteReasoningAxioms(sw, cfHidden, cActions);
             }
@@ -568,7 +572,7 @@ namespace CPORLib.PlanningModel
 
 
             //write invariants
-            foreach (CompoundFormula cf in m_lHidden)
+            foreach (CompoundFormula cf in m_lHiddenFormulas)
             {
                 sw.WriteLine("\t" + cf.ToInvariant());
             }
@@ -1315,7 +1319,7 @@ namespace CPORLib.PlanningModel
 
             sw.WriteLine();
 
-            foreach (CompoundFormula cf in Hidden)
+            foreach (CompoundFormula cf in HiddenFormulas)
                 sw.WriteLine("\t" + cf);
 
 

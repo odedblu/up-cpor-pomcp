@@ -787,22 +787,17 @@ namespace CPORLib.PlanningModel
         public void AddInitialStateFormula(CompoundFormula cf)
         {
 
-            if (false && !cf.IsSimpleFormula())
-            {
-                CompoundFormula cfCNF = (CompoundFormula)cf.ToCNF();
-                foreach (CompoundFormula cfSub in cfCNF.Operands)
-                    AddInitialStateFormula(cfSub);
-                return;
-            }
-
             m_lOriginalHiddenFormulas.Add(cf);
             m_lHiddenFormulas.Add((CompoundFormula)cf);
+
+
             EfficientFormula ef = new EfficientFormula(cf.Operator);
             ef.OriginalFormula = cf;
             m_lEfficientHidden.Add(ef);
             ISet<Predicate> lHidden = cf.GetAllPredicates();
             foreach (Predicate p in lHidden)
             {
+
                 GroundedPredicate pCanonical = (GroundedPredicate)p.Canonical();
                 if (!Unknown.Contains(pCanonical))
                     Unknown.Add(pCanonical);

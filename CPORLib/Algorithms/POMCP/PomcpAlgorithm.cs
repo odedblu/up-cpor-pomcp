@@ -41,7 +41,7 @@ namespace CPORLib.Algorithms
                               Func<State, Problem,Action, double> rewardFunction,
                               bool ExactBelifeStateRepresentation=false) : base(problem.Domain, problem)
         {
-            MaxInnerDepth = 5;
+            MaxInnerDepth = 3;
             MaxOuterDepth = 50;
 
 
@@ -182,10 +182,19 @@ namespace CPORLib.Algorithms
             List<State> lStates = new List<State>();
             List<Formula> lObservations = new List<Formula>();
 
-
-            while (!Current.IsLeaf())
+            bool bDone = false;
+            while (!bDone)
             {
-
+                // Expand node.
+                if (Current.IsLeaf())
+                {
+                    if (InexactExpansion)
+                        ExpandNodeInexact(Current);
+                    else
+                        ExpandNode(Current);
+                    bDone = true;
+                }
+                
 
                 // Select next action to preform inside the tree.
                 Action NextAction = ActionSelectPolicy.SelectBestAction(Current, CurrentState);
@@ -226,21 +235,14 @@ namespace CPORLib.Algorithms
                 if (CurrentDepth >= MaxInnerDepth)
                 {
                     //Console.WriteLine("Got max depth on search");
-                    break;
+                    bDone = true;
                 }
 
                 FilterActions(Current, CurrentState);
 
             }
 
-            // Expand node.
-            if (Current.IsLeaf())
-            {
-                if (InexactExpansion)
-                    ExpandNodeInexact(Current);
-                else
-                    ExpandNode(Current);
-            }
+            
 
             // Finished run inside the tree, now do rollout.
             double Reward = ForRollout(CurrentState, CurrentDepth);
@@ -259,6 +261,10 @@ namespace CPORLib.Algorithms
             double dR = Reward;
             while(opn.Parent != null)
             {
+                if(dR < -100)
+                    Console.Write("*");
+
+
                 apn = (ActionPomcpNode)opn.Parent;
                 opn = (ObservationPomcpNode)opn.Parent.Parent;
                 
@@ -273,8 +279,6 @@ namespace CPORLib.Algorithms
 
                 double dDeltaValue = (dR - apn.Value) / apn.VisitedCount;
 
-                if (apn.Value + dDeltaValue > 100)
-                    Console.Write("*");
 
                 apn.Value += dDeltaValue;
 
@@ -323,7 +327,7 @@ namespace CPORLib.Algorithms
             foreach(ActionPomcpNode acn in lChildren)
             {
                 Action a = acn.Action;
-                if (a.Preconditions != null && !a.Preconditions.IsTrue(s.Predicates))
+                if (a.Preconditions != null && !a.Preconditions.IsTrue(s.Predicates, false))
                     opn.RemoveChild(acn);
             }
         }
@@ -380,10 +384,7 @@ namespace CPORLib.Algorithms
 
                 }
             }
-            if (Node.PartiallySpecifiedState.GeneratingAction != null &&
-                Node.PartiallySpecifiedState.GeneratingAction.Name == "checking" &&
-                Node.ChildrenSize() == 1)
-                Console.Write("*");
+            
         }
 
 
@@ -458,7 +459,8 @@ namespace CPORLib.Algorithms
             if (CurrentState == null) return -1;
 
             double StartStateReward = RewardFunction(CurrentState, Problem, CurrentState.GeneratingAction);
-            if (StartStateReward > 0) return StartStateReward * Math.Pow(DiscountFactor, currentDepth);
+            if (StartStateReward > 0) 
+                return StartStateReward * Math.Pow(DiscountFactor, currentDepth);
 
             double Reward = StartStateReward * Math.Pow(DiscountFactor, currentDepth);
             currentDepth += 1;
@@ -479,12 +481,19 @@ namespace CPORLib.Algorithms
                 lActions.Add(RolloutAction);
 
 
-                if (RolloutAction == null) return Double.MinValue;
+                if (RolloutAction == null) 
+                    return Double.MinValue;
                 State NextState = CurrentState.Apply(RolloutAction);
-                if (NextState == null) return Double.MinValue;
+                if (NextState == null) 
+                    return Double.MinValue;
                
                 double CurrentReward = RewardFunction(NextState, Problem, RolloutAction);
+
+
                 Reward += Math.Pow(DiscountFactor, currentDepth) * CurrentReward;
+                if (CurrentReward < -100 || Reward < -100)
+                    Console.Write("*");
+
                 if (CurrentReward > 0) { 
                     break; 
                 }
@@ -511,7 +520,6 @@ namespace CPORLib.Algorithms
             ExpandNode(Root);
             while (!CurrentState.IsGoalState())
             {
-
                 Search(nCurrent, verbose);
 
                 //PrintTree(nCurrent, "", 0);
@@ -613,6 +621,7 @@ namespace CPORLib.Algorithms
                 ObservationPomcpNode nLeaf = (ObservationPomcpNode)nCurrent;
 
                 double v = nLeaf.RolloutSum / nLeaf.VisitedCount;
+                
                 Console.WriteLine(sPath + " - " + v + ", " + nCurrent.VisitedCount);
             }
             else

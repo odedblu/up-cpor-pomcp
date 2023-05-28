@@ -39,9 +39,9 @@ namespace CPORLib.Algorithms
             Value = 0;
             ParticleFilter = particleFilter;
             ObservedPredicates = new List<Predicate>(); 
-            foreach (Predicate Predicate in Observed) ObservedPredicates.Add(Predicate);
+            foreach (Predicate Predicate in Observed) 
+                ObservedPredicates.Add(Predicate);
             PartiallySpecifiedState = partiallySpecifiedState;
-            Observation = observation;
 
         }
 
@@ -55,6 +55,9 @@ namespace CPORLib.Algorithms
             PartiallySpecifiedState = partiallySpecifiedState;
             Observation = observation;
 
+            //if (ID == 3256)
+            //    Console.Write("*");
+
         }
 
         public void AddActionPomcpNode(ActionPomcpNode actionPomcpNode)
@@ -67,7 +70,7 @@ namespace CPORLib.Algorithms
             }
         }
 
-        public string ToString()
+        public override string ToString()
         {
             return string.Join(", ", ObservedPredicates);
         }

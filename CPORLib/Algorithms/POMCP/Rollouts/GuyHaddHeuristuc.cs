@@ -145,7 +145,6 @@ namespace CPORLib.Algorithms
                 bestActions = StateResultCache[s];
             }
 
-            Random rnd = new Random();
             Action BestAction = null;
 
             if (bestActions.Count == 0)
@@ -154,12 +153,12 @@ namespace CPORLib.Algorithms
                 {
                     return null;
                 }
-                int selectedIndex = rnd.Next(s.AvailableActions.Count());
+                int selectedIndex = RandomGenerator.Next(s.AvailableActions.Count());
                 BestAction = s.AvailableActions.ElementAt(selectedIndex);
             }
             else
             {
-                int selectedIndex = rnd.Next(bestActions.Count());
+                int selectedIndex = RandomGenerator.Next(bestActions.Count());
                 BestAction = bestActions.ElementAt(selectedIndex);
             }
             return BestAction;

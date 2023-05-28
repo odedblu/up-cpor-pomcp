@@ -131,7 +131,6 @@ namespace CPORLib
 
             if (bOnline)
             {
-                Random rnd = new Random(0);
                 //sdr.OnlineReplanning();
                 int cIterations = 10, cSuccess = 0;
                     int idx = 0;
@@ -151,7 +150,7 @@ namespace CPORLib
                         if (!bResult)
                         {
                             sObservation = "true";
-                            if (rnd.NextDouble() < 0.5)
+                            if (RandomGenerator.NextDouble() < 0.5)
                                 sObservation = "false";
                             bResult = sdr.SetObservation(sObservation);
                         }

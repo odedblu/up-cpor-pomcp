@@ -2294,7 +2294,7 @@ namespace CPORLib.PlanningModel
                 lPredicates.Add(p);
                 lInitiallyKnownPredicates.Add(p);
             }
-            foreach (CompoundFormula cf in problem.Hidden)
+            foreach (CompoundFormula cf in problem.HiddenFormulas)
             {
                 cf.GetAllPredicates(lPredicates);
             }
@@ -3176,7 +3176,7 @@ namespace CPORLib.PlanningModel
             if (bSimpleChoose)
                 WritePredicates(sw, true, p.Unknown.Count());
             else
-                WritePredicates(sw, true, p.Hidden.Count());
+                WritePredicates(sw, true, p.HiddenFormulas.Count());
             sw.WriteLine();
             WriteActions(sw, false, true, null);
 
@@ -3189,9 +3189,9 @@ namespace CPORLib.PlanningModel
             }
             else
             {
-                for (int i = 0; i < p.Hidden.Count(); i++)
+                for (int i = 0; i < p.HiddenFormulas.Count(); i++)
                 {
-                    WriteChooseActions(sw, p.Hidden.ElementAt(i), i, p.Hidden.Count());
+                    WriteChooseActions(sw, p.HiddenFormulas.ElementAt(i), i, p.HiddenFormulas.Count());
                 }
             }
 
