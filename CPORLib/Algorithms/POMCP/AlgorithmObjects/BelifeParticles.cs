@@ -170,7 +170,7 @@ namespace CPORLib.Algorithms
             bool result = true;
             foreach(State s in ViewedStates.Keys)
             {
-                if (a.Preconditions.IsFalse(s.Predicates))
+                if (a.Preconditions.IsFalse(s.Predicates, false))
                     return false;
             }
             
