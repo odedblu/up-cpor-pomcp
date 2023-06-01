@@ -372,5 +372,15 @@ namespace CPORLib.Algorithms
             }
             return ChangingPredicates;
         }
+
+        (PlanningAction, State) IRolloutPolicy.ChooseAction(State s)
+        {
+            throw new NotImplementedException();
+        }
+
+        public (PlanningAction, State, List<State>) ChooseAction(State s, List<State> l)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

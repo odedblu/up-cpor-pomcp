@@ -26,17 +26,19 @@ public class Program
         FFUtilities.Verbose = false;
         gcmd_line.display_info = 0;
         gcmd_line.debug = 0;
-        RunTest("wumpus05", bOnline);
+
+       RunTest("localize5", bOnline);
+
+        RunTest("doors5", bOnline);
 
         RunTest("blocks3", bOnline);
 
 
         //RunTest("localize5noisy", bOnline);
-        RunTest("doors5", bOnline);
-       RunTest("localize5", bOnline);
 
 
 
+        RunTest("wumpus05", bOnline);
 
         RunTest("blocks3", bOnline);
 

@@ -17,7 +17,9 @@ namespace CPORLib.Algorithms
         public List<Action> AllGroundedActions;
         public List<Action> GroundedActuationActions;
 
-        public Dictionary<GroundedPredicate, HashSet<int>> ActionPreconditions;
+
+        public Dictionary<GroundedPredicate, HashSet<int>> AllActionPreconditions;
+        public Dictionary<GroundedPredicate, HashSet<int>> ActuationActionPreconditions;
 
         public List<int> ConditionalActions;
         public Dictionary<State, HashSet<Action>> StateResultCache { get; set; }
@@ -41,14 +43,16 @@ namespace CPORLib.Algorithms
 
             AllGroundedActions = Problem.GroundedActions;
             GroundedActuationActions = new List<Action>();
-            ActionPreconditions = new Dictionary<GroundedPredicate, HashSet<int>>();
+            ActuationActionPreconditions = new Dictionary<GroundedPredicate, HashSet<int>>();
+            AllActionPreconditions = new Dictionary<GroundedPredicate, HashSet<int>>();
             StateResultCache = new Dictionary<State, HashSet<Action>>();
 
 
             int cActions = 0;
 
             ConditionalActions = new List<int>();
-            ActionPreconditions[Utilities.TRUE_PREDICATE] = new HashSet<int>();
+            ActuationActionPreconditions[Utilities.TRUE_PREDICATE] = new HashSet<int>();
+            AllActionPreconditions[Utilities.TRUE_PREDICATE] = new HashSet<int>();
 
 
             AlwaysConstant = new GenericArraySet<Predicate>();
@@ -61,41 +65,51 @@ namespace CPORLib.Algorithms
 
             foreach (Action a in AllGroundedActions)
             {
-                if (a.Observe == null)
-                {
-                    Action aTag = new Action(a.Name);
 
-                    if (a.Preconditions != null)
+
+                Action aTag = new Action(a.Name);
+
+                if (a.Preconditions != null)
+                {
+                    CompoundFormula cfPreconditions = new CompoundFormula("and");
+                    foreach (GroundedPredicate gp in a.Preconditions.GetAllPredicates())
                     {
-                        CompoundFormula cfPreconditions = new CompoundFormula("and");
-                        foreach (GroundedPredicate gp in a.Preconditions.GetAllPredicates())
+                        if (!(Domain.AlwaysConstant(gp) && Domain.AlwaysKnown(gp)))
                         {
-                            if (!(Domain.AlwaysConstant(gp) && Domain.AlwaysKnown(gp)))
+                            cfPreconditions.AddOperand(gp);
+
+                            if (!AllActionPreconditions.ContainsKey(gp))
+                                AllActionPreconditions[gp] = new HashSet<int>();
+                            AllActionPreconditions[gp].Add(cActions);
+
+                            if (a.Observe == null)
                             {
-                                cfPreconditions.AddOperand(gp);
-                                if (!ActionPreconditions.ContainsKey(gp))
-                                    ActionPreconditions[gp] = new HashSet<int>();
-                                ActionPreconditions[gp].Add(cActions);
+                                if (!ActuationActionPreconditions.ContainsKey(gp))
+                                    ActuationActionPreconditions[gp] = new HashSet<int>();
+                                ActuationActionPreconditions[gp].Add(cActions);
                             }
                         }
-                        aTag.Preconditions = cfPreconditions;
                     }
-                    else
-                    {
-                        ActionPreconditions[Utilities.TRUE_PREDICATE].Add(cActions);
-                    }
-                    aTag.Effects = a.Effects;
-                    aTag.Observe = a.Observe;
-                    GroundedActuationActions.Add(aTag);
-                    if (aTag.Effects != null && a.Effects.ContainsCondition())
-                        ConditionalActions.Add(cActions);
-                    cActions++;
+                    aTag.Preconditions = cfPreconditions;
                 }
+                else
+                {
+                    AllActionPreconditions[Utilities.TRUE_PREDICATE].Add(cActions);
+                    if (a.Observe == null)
+                        ActuationActionPreconditions[Utilities.TRUE_PREDICATE].Add(cActions);
+                }
+                aTag.Effects = a.Effects;
+                aTag.Observe = a.Observe;
+                GroundedActuationActions.Add(aTag);
+                if (aTag.Effects != null && a.Effects.ContainsCondition())
+                    ConditionalActions.Add(cActions);
+                cActions++;
+
             }
             m_bInitialized = true;
         }
 
-        public Action ChooseAction(State s)
+        public (Action, State) ChooseAction(State s)
         {
             Init();
 
@@ -149,19 +163,22 @@ namespace CPORLib.Algorithms
 
             if (bestActions.Count == 0)
             {
+                return (null, null);
+                /*
                 if (s.AvailableActions.Count() == 0)
                 {
-                    return null;
+                    return (null, null);
                 }
                 int selectedIndex = RandomGenerator.Next(s.AvailableActions.Count());
                 BestAction = s.AvailableActions.ElementAt(selectedIndex);
+                */
             }
             else
             {
                 int selectedIndex = RandomGenerator.Next(bestActions.Count());
                 BestAction = bestActions.ElementAt(selectedIndex);
             }
-            return BestAction;
+            return (BestAction, null);
         }
 
         public double ComputeHAdd(State s)
@@ -194,13 +211,13 @@ namespace CPORLib.Algorithms
             while (!bDone)
             {
                 HashSet<int> hsActions = new HashSet<int>();
-                foreach(int iAction in ActionPreconditions[Utilities.TRUE_PREDICATE])
+                foreach(int iAction in ActuationActionPreconditions[Utilities.TRUE_PREDICATE])
                     hsActions.Add(iAction);
                 foreach (GroundedPredicate gp in hsAll)
                 {
-                    if (ActionPreconditions.ContainsKey(gp))
+                    if (ActuationActionPreconditions.ContainsKey(gp))
                     {
-                        foreach (int iAction in ActionPreconditions[gp])
+                        foreach (int iAction in ActuationActionPreconditions[gp])
                         {
                             hsActions.Add(iAction);
                         }
@@ -217,11 +234,16 @@ namespace CPORLib.Algorithms
                     {
                         ISet<Predicate> hsPreconditions = a.Preconditions.GetAllPredicates();
                         foreach (GroundedPredicate gp in hsPreconditions)
-                            if (!hsAll.Contains(gp))
+                        {
+                            if (!gp.Negation)
                             {
-                                bContainsAll = false;
-                                break;
+                                if (!hsAll.Contains(gp))
+                                {
+                                    bContainsAll = false;
+                                    break;
+                                }
                             }
+                        }
                     }
                     if (bContainsAll)
                     {
@@ -264,5 +286,9 @@ namespace CPORLib.Algorithms
             return iSum;
         }
 
+        public virtual (PlanningAction, State, List<State>) ChooseAction(State s, List<State> l)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

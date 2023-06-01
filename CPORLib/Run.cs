@@ -95,7 +95,7 @@ namespace CPORLib
             int SIMULATIONS = 500;
 
             //IRolloutPolicy RolloutPolicy = new GuyHaddHeuristuc(domain, problem);
-            IRolloutPolicy RolloutPolicy = new SDRwithHAddHeuristic();
+            IRolloutPolicy RolloutPolicy = new SDRwithHAddHeuristic(domain, problem);
 
             IActionSelectPolicy ActionSelectPolicy = new UCBValueActionSelectPolicy(EXPLORATION_FACTOR_UCB);
             IActionSelectPolicy FinalActionSelectPolicy = new MaxValueActionSelectPolicy();

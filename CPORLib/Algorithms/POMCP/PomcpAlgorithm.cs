@@ -250,7 +250,23 @@ namespace CPORLib.Algorithms
                 SDRRolloutPolicy.UpdateTaggedDomainAndProblem(Current.PartiallySpecifiedState, false);
             }
 
-            double Reward = ForRollout(CurrentState, CurrentDepth);
+            double Reward = 0;
+            if (RolloutPolicy is SDRwithHAddHeuristic)
+            {
+                List<State> lSample = new List<State>();
+                foreach (State sPossible in Current.ParticleFilter.ViewedStates.Keys)
+                {
+                    if (!sPossible.Equals(CurrentState))
+                        lSample.Add(sPossible);
+                }
+                Reward = ForRollout(CurrentState, lSample, CurrentDepth);
+            }
+            else
+            {
+                Reward = ForRollout(CurrentState, CurrentDepth);
+            }
+            
+            
             //double Reward = MultipleRollouts(Current.ParticleFilter, CurrentDepth, 1);
             Current.RolloutSum += Reward;
             Current.VisitedCount++;
@@ -451,8 +467,9 @@ namespace CPORLib.Algorithms
             double CurrentStateReward = RewardFunction(state, Problem, state.GeneratingAction);
             if (CurrentStateReward > 0) return CurrentStateReward;
 
-            Action RolloutAction = RolloutPolicy.ChooseAction(state);
-            State NextState = state.Apply(RolloutAction);
+            (Action RolloutAction, State NextState) = RolloutPolicy.ChooseAction(state);
+            if (NextState == null)
+                NextState = state.Apply(RolloutAction);
             double Reward = RewardFunction(NextState, Problem, RolloutAction);
             if (Reward > 0) return Reward;
             return Reward + DiscountFactor * Rollout(NextState, currentDepth + 1);
@@ -480,7 +497,7 @@ namespace CPORLib.Algorithms
             {
                 iOuterDepth++;
 
-                Action RolloutAction = RolloutPolicy.ChooseAction(CurrentState);
+                (Action RolloutAction, State NextState) = RolloutPolicy.ChooseAction(CurrentState);
 
                 lStates.Add(CurrentState);
                 lActions.Add(RolloutAction);
@@ -488,7 +505,8 @@ namespace CPORLib.Algorithms
 
                 if (RolloutAction == null) 
                     return Double.MinValue;
-                State NextState = CurrentState.Apply(RolloutAction);
+                if(NextState == null)
+                    NextState = CurrentState.Apply(RolloutAction);
                 if (NextState == null) 
                     return Double.MinValue;
                
@@ -508,6 +526,64 @@ namespace CPORLib.Algorithms
             }
             return Reward;
         }
+
+
+        public double ForRollout(State sAssumedReal, List<State> lOthers, int currentDepth)
+        {
+            State CurrentState = sAssumedReal;
+            List<State> lCurrentOthers = new List<State>(lOthers);
+
+            if (CurrentState == null) 
+                return -1;
+
+            double StartStateReward = RewardFunction(CurrentState, Problem, CurrentState.GeneratingAction);
+            if (StartStateReward > 0)
+                return StartStateReward * Math.Pow(DiscountFactor, currentDepth);
+
+            double Reward = StartStateReward * Math.Pow(DiscountFactor, currentDepth);
+            currentDepth += 1;
+
+            List<State> lStates = new List<State>();
+            List<Action> lActions = new List<PlanningAction>();
+
+            int iOuterDepth = 0;
+
+            //while (!((Math.Pow(DiscountFactor, (double)currentDepth) < DepthThreshold || DiscountFactor == 0) && currentDepth != 0))
+            while (iOuterDepth < MaxOuterDepth)
+            {
+                iOuterDepth++;
+
+                (Action RolloutAction, State NextState, List<State> lNextStates) = RolloutPolicy.ChooseAction(CurrentState, lCurrentOthers);
+
+                lStates.Add(CurrentState);
+                lActions.Add(RolloutAction);
+
+
+                if (RolloutAction == null)
+                    return Double.MinValue;
+                
+                if (NextState == null)
+                    return Double.MinValue;
+
+                double CurrentReward = RewardFunction(NextState, Problem, RolloutAction);
+
+
+                Reward += Math.Pow(DiscountFactor, currentDepth) * CurrentReward;
+                if (CurrentReward < -100 || Reward < -100)
+                    Console.Write("*");
+
+                if (CurrentReward > 0)
+                {
+                    break;
+                }
+                currentDepth += 1;
+                State prevState = CurrentState;
+                CurrentState = NextState;
+                lOthers = lNextStates;
+            }
+            return Reward;
+        }
+
 
 
 

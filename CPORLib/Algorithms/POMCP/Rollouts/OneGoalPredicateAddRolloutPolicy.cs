@@ -53,5 +53,15 @@ namespace CPORLib.Algorithms
             SelectedIndex = RandomGenerator.Next(0, ActionScores.Count());
             return ActionScores.ElementAt(SelectedIndex).Key;
         }
+
+        public (PlanningAction, State, List<State>) ChooseAction(State s, List<State> l)
+        {
+            throw new NotImplementedException();
+        }
+
+        (PlanningAction, State) IRolloutPolicy.ChooseAction(State s)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

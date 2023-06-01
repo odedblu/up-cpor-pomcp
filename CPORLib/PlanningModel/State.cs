@@ -19,6 +19,7 @@ namespace CPORLib.PlanningModel
         protected ISet<Predicate> m_lChangingPredicates;
 
         public ISet<Predicate> ChangingPredicates { get { return m_lChangingPredicates; } }
+        public ISet<Predicate> FixedHiddenPredicates { get { return m_lFixedAndHidden; } }
 
         public List<Action> AvailableActions { get; set; }
         public State Predecessor { set; get; }

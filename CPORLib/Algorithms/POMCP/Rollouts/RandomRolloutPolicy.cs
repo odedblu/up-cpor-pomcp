@@ -12,12 +12,17 @@ namespace CPORLib.Algorithms
 {
     internal class RandomRolloutPolicy : IRolloutPolicy
     {
-        public Action ChooseAction(State s)
+        public (Action,State) ChooseAction(State s)
         {
             if(s.AvailableActions.Count() == 0)  s.GroundAllActions();
             List<Action> PossibleActions = s.AvailableActions;
             int SelectedIndex = RandomGenerator.Next(PossibleActions.Count);
-            return PossibleActions[SelectedIndex];
+            return (PossibleActions[SelectedIndex], null);
+        }
+
+        public (PlanningAction, State, List<State>) ChooseAction(State s, List<State> l)
+        {
+            throw new NotImplementedException();
         }
     }
 }

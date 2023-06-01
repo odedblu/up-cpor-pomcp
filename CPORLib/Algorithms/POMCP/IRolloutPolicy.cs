@@ -11,6 +11,7 @@ namespace CPORLib.Algorithms
 {
     internal interface IRolloutPolicy
     {
-        Action ChooseAction(State s);
+        (Action, State) ChooseAction(State s);
+        (Action, State, List<State>) ChooseAction(State s, List<State> l);
     }
 }
