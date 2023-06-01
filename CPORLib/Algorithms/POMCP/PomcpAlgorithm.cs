@@ -249,6 +249,10 @@ namespace CPORLib.Algorithms
             {
                 SDRRolloutPolicy.UpdateTaggedDomainAndProblem(Current.PartiallySpecifiedState, false);
             }
+            if (RolloutPolicy is ParticelAverageHAddPolicy ParticleRolloutPolicy)
+            {
+                ParticleRolloutPolicy.UpdateParticle(Current.ParticleFilter);
+            }
 
             double Reward = ForRollout(CurrentState, CurrentDepth);
             //double Reward = MultipleRollouts(Current.ParticleFilter, CurrentDepth, 1);
@@ -266,9 +270,9 @@ namespace CPORLib.Algorithms
             double dR = Reward;
             while(opn.Parent != null)
             {
-                if(dR < -100)
+                /*if(dR < -100)
                     Console.Write("*");
-
+                */
 
                 apn = (ActionPomcpNode)opn.Parent;
                 opn = (ObservationPomcpNode)opn.Parent.Parent;
