@@ -245,10 +245,7 @@ namespace CPORLib.Algorithms
             
 
             // Finished run inside the tree, now do rollout.
-            if(RolloutPolicy is SDRwithHAddHeuristic SDRRolloutPolicy)
-            {
-                SDRRolloutPolicy.UpdateTaggedDomainAndProblem(Current.PartiallySpecifiedState, false);
-            }
+            
             if (RolloutPolicy is ParticelAverageHAddPolicy ParticleRolloutPolicy)
             {
                 ParticleRolloutPolicy.UpdateParticle(Current.ParticleFilter);
@@ -257,7 +254,8 @@ namespace CPORLib.Algorithms
             double Reward = 0;
             if (RolloutPolicy is SDRwithHAddHeuristic)
             {
-                List<State> lSample = new List<State>();
+                //bugbug - need to subsample in larger domains (wumpus)
+                ISet<State> lSample = new HashSet<State>();
                 foreach (State sPossible in Current.ParticleFilter.ViewedStates.Keys)
                 {
                     if (!sPossible.Equals(CurrentState))
@@ -532,10 +530,10 @@ namespace CPORLib.Algorithms
         }
 
 
-        public double ForRollout(State sAssumedReal, List<State> lOthers, int currentDepth)
+        public double ForRollout(State sAssumedReal, ISet<State> lOthers, int currentDepth)
         {
             State CurrentState = sAssumedReal;
-            List<State> lCurrentOthers = new List<State>(lOthers);
+            ISet<State> lCurrentOthers = new HashSet<State>(lOthers);
 
             if (CurrentState == null) 
                 return -1;
@@ -557,7 +555,7 @@ namespace CPORLib.Algorithms
             {
                 iOuterDepth++;
 
-                (Action RolloutAction, State NextState, List<State> lNextStates) = RolloutPolicy.ChooseAction(CurrentState, lCurrentOthers);
+                (Action RolloutAction, State NextState, ISet<State> lNextStates) = RolloutPolicy.ChooseAction(CurrentState, lCurrentOthers);
 
                 lStates.Add(CurrentState);
                 lActions.Add(RolloutAction);
@@ -583,7 +581,7 @@ namespace CPORLib.Algorithms
                 currentDepth += 1;
                 State prevState = CurrentState;
                 CurrentState = NextState;
-                lOthers = lNextStates;
+                lCurrentOthers = lNextStates;
             }
             return Reward;
         }

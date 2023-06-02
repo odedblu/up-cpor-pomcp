@@ -487,20 +487,23 @@ namespace CPORLib.PlanningModel
         private int m_iHashCode = 0;
         public override int GetHashCode()
         {
-            unchecked
+            if (m_iHashCode != 0)
             {
-                int hash = 17;
-                foreach (Predicate p in m_lFixedAndHidden)
+                unchecked
                 {
-                    hash *= p.GetHashCode();
+                    int hash = 17;
+                    foreach (Predicate p in m_lFixedAndHidden)
+                    {
+                        hash *= p.GetHashCode();
+                    }
+                    foreach (Predicate p in m_lChangingPredicates)
+                    {
+                        hash *= p.GetHashCode();
+                    }
+                    m_iHashCode = hash;
                 }
-                foreach (Predicate p in m_lChangingPredicates)
-                {
-                    hash *= p.GetHashCode();
-                }
-                return hash;
             }
-
+            return m_iHashCode;
         }
 
         public bool Contains(Predicate p)

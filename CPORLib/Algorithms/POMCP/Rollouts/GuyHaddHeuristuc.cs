@@ -23,6 +23,7 @@ namespace CPORLib.Algorithms
 
         public List<int> ConditionalActions;
         public Dictionary<State, HashSet<Action>> StateResultCache { get; set; }
+        protected Dictionary<State, double> HeuristicsCache;
 
         public Domain Domain;
         public Problem Problem;
@@ -46,7 +47,7 @@ namespace CPORLib.Algorithms
             ActuationActionPreconditions = new Dictionary<GroundedPredicate, HashSet<int>>();
             AllActionPreconditions = new Dictionary<GroundedPredicate, HashSet<int>>();
             StateResultCache = new Dictionary<State, HashSet<Action>>();
-
+            HeuristicsCache = new Dictionary<State, double>();
 
             int cActions = 0;
 
@@ -185,10 +186,17 @@ namespace CPORLib.Algorithms
         {
             Init();
 
+            if(HeuristicsCache.TryGetValue(s, out double v))
+            {
+                return v;
+            }
+
+
+
             ISet<Predicate> hsAllChanging = new GenericArraySet<Predicate>();
             foreach (GroundedPredicate gp in s.ChangingPredicates)
                 hsAllChanging.Add(gp);
-            ISet<Predicate> hsAll = new UnifiedSet<Predicate>(AlwaysConstant, hsAllChanging);
+            ISet<Predicate> hsAll = new UnifiedSet<Predicate>(AlwaysConstant, s.FixedHiddenPredicates ,hsAllChanging);
 
             List<ISet<Predicate>> lLevels = new List<ISet<Predicate>>();
             lLevels.Add(new GenericArraySet<Predicate>(hsAllChanging));
@@ -248,14 +256,17 @@ namespace CPORLib.Algorithms
                     if (bContainsAll)
                     {
                        
-                        Formula cf = a.GetApplicableEffects(hsAll, false);
-                        foreach (GroundedPredicate gpEffect in cf.GetAllPredicates())
+                        ISet<Predicate> lEffects = a.GetApplicableEffects(hsAll, false);
+                        foreach (GroundedPredicate gpEffect in lEffects)
                         {
-                            if (!hsAll.Contains(gpEffect))
+                            if (!gpEffect.Negation)
                             {
-                                hsNextLevel.Add(gpEffect);
-                                if (hsGoal.Contains(gpEffect) && !dGoalCosts.ContainsKey(gpEffect))
-                                    dGoalCosts[gpEffect] = cLevels + 1;
+                                if (!hsAll.Contains(gpEffect))
+                                {
+                                    hsNextLevel.Add(gpEffect);
+                                    if (hsGoal.Contains(gpEffect) && !dGoalCosts.ContainsKey(gpEffect))
+                                        dGoalCosts[gpEffect] = cLevels + 1;
+                                }
                             }
                         }
                     }
@@ -283,10 +294,12 @@ namespace CPORLib.Algorithms
                 iSum += iValue;
             }
 
+            HeuristicsCache[s] = iSum;
+
             return iSum;
         }
 
-        public virtual (PlanningAction, State, List<State>) ChooseAction(State s, List<State> l)
+        public virtual (PlanningAction, State, ISet<State>) ChooseAction(State s, ISet<State> l)
         {
             throw new NotImplementedException();
         }

@@ -216,16 +216,18 @@ namespace CPORLib.PlanningModel
             return aNew;
         }
 
-        public Formula GetApplicableEffects(ISet<Predicate> lPredicates, bool bContainsNegations)
+        public ISet<Predicate> GetApplicableEffects(ISet<Predicate> lPredicates, bool bContainsNegations)
         {
             List<CompoundFormula> lConditions = new List<CompoundFormula>();
             List<Formula> lObligatory = new List<Formula>();
+            ISet<Predicate> lEffects = new GenericArraySet<Predicate>();
+
             SplitEffects(lConditions, lObligatory);
-            CompoundFormula cfEffects = new CompoundFormula("and");
-            foreach (Formula f in lObligatory)
-                cfEffects.SimpleAddOperand(f);
+
+            foreach (PredicateFormula f in lObligatory)
+                AddPredicatesToEffectList(lEffects, f);
+
             int iCondition = 0;
-            List<Predicate> lEffects = new List<Predicate>();
             foreach (CompoundFormula cfWhen in lConditions)
             {
                 if (cfWhen.Operands[0].ContainedIn(lPredicates, bContainsNegations))
@@ -248,11 +250,8 @@ namespace CPORLib.PlanningModel
 
                 iCondition++;
             }
-            foreach (Predicate p in lEffects)
-            {
-                cfEffects.AddOperand(p);
-            }
-            return cfEffects;
+            
+            return lEffects;
         }
 
 
@@ -307,7 +306,7 @@ namespace CPORLib.PlanningModel
             }
         }
 
-        private void AddPredicatesToEffectList(List<Predicate> lEffects, Formula f)
+        private void AddPredicatesToEffectList(ISet<Predicate> lEffects, Formula f)
         {
             if (f is PredicateFormula)
             {

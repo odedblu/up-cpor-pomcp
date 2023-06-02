@@ -20,7 +20,7 @@ namespace CPORLib.Algorithms
             return (PossibleActions[SelectedIndex], null);
         }
 
-        public (PlanningAction, State, List<State>) ChooseAction(State s, List<State> l)
+        public (PlanningAction, State, ISet<State>) ChooseAction(State s, ISet<State> l)
         {
             throw new NotImplementedException();
         }

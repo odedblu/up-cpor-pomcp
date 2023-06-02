@@ -42,7 +42,7 @@ namespace CPORLib.Algorithms
             return score_sum / (double)total_states_count;
         }
 
-        public PlanningAction ChooseAction(State s)
+        public (PlanningAction, State) ChooseAction(State s)
         {
             Action BestAction = null;
             double BestActionScore = Double.MaxValue;
@@ -65,7 +65,12 @@ namespace CPORLib.Algorithms
             {
                 currentParticle = currentParticle.Apply(BestAction, BestAction.Observe);
             }
-            return BestAction;
+            return (BestAction,null);
+        }
+
+        public (PlanningAction, State, ISet<State>) ChooseAction(State s, ISet<State> l)
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -108,8 +108,8 @@ namespace CPORLib.Algorithms
 
                     if (bContainsAll)
                     {
-                        Formula cf = a.GetApplicableEffects(hsAll, true);
-                        foreach (GroundedPredicate gpEffect in cf.GetAllPredicates())
+                        ISet<Predicate> lEffects = a.GetApplicableEffects(hsAll, true);
+                        foreach (GroundedPredicate gpEffect in lEffects)
                         {
                             if (!hsAll.Contains(gpEffect))
                             {

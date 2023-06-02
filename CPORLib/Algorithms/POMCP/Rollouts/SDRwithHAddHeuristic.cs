@@ -7,35 +7,33 @@ using Action = CPORLib.PlanningModel.PlanningAction;
 using CPORLib.Tools;
 using static CPORLib.Tools.Options;
 using System.Linq;
+using CPORLib.FFCS;
 
 namespace CPORLib.Algorithms
 {
     internal class SDRwithHAddHeuristic : GuyHaddHeuristuc
     {
-        //public IRolloutPolicy taggedHAdd { get; set; }  
+
+        protected Dictionary<State, Dictionary<ISet<State>,double>> HeuristicsCache;
 
         public SDRwithHAddHeuristic(Domain d, Problem p) : base(d,p)
         {
-            //taggedHAdd = null;
+            HeuristicsCache = new Dictionary<State, Dictionary<ISet<State>, double>>();
         }
 
-        public void UpdateTaggedDomainAndProblem(PartiallySpecifiedState pss, bool bPreconditionFailure)
-        {
-            //pss.GetTaggedDomainAndProblem(DeadendStrategies.Lazy, bPreconditionFailure, out int cTags, out Domain dTagged, out Problem pTagged);
-            //taggedHAdd = new GuyHaddHeuristuc(dTagged, pTagged);
-        }
+        
 
 
 
-        public override (Action, State, List<State>) ChooseAction(State sAssumedReal, List<State> lOthers)
+        public override (Action, State, ISet<State>) ChooseAction(State sAssumedReal, ISet<State> lOthers)
         {
             Init();
 
 
-            double dBestValue = double.NegativeInfinity;
+            double dBestValue = double.PositiveInfinity;
             Action aBest = null;
             State sBestNext = null;
-            List<State> lBestNext = null;
+            ISet<State> lBestNext = null;
             
             if (!StateResultCache.ContainsKey(sAssumedReal))//leaving it here although for now we will not cache
             {
@@ -61,6 +59,8 @@ namespace CPORLib.Algorithms
                         else
                             bValid = false;
                     }
+                    if (a.Effects == null && lOthers.Count == 0) //no need to consider sensing action if there is only one state
+                        bValid = false;
                     if (bValid)
                     {
                         validActions.Add(a);
@@ -73,42 +73,51 @@ namespace CPORLib.Algorithms
                     if (NextState == null)
                         Console.Write("*");
 
-                    Predicate pObserve = null; //assuming here that we observe only facts, not forumlas
 
+                    bool bAssumedRealValue = true;
+                    Predicate pObserve = null;
                     if (action.Observe != null)
                     {
                         pObserve = ((PredicateFormula)action.Observe).Predicate;
-                        if (!NextState.Predicates.Contains(pObserve))
-                            pObserve = pObserve.Negate();
+                        bAssumedRealValue = NextState.Predicates.Contains(pObserve);
                     }
 
-                    List<State> lNextOthers = new List<State>();
+                    bool bMeaningfulAction = !NextState.Equals(sAssumedReal);
+                    ISet<State> lNextOthers = new HashSet<State>();
                     foreach (State s in lOthers)
                     {
                         State sNextOther = s.Apply(action);
                         bool bConsistent = true;
                         if(action.Observe != null)
                         {
-                            if(pObserve.Negation == false && !sNextOther.Predicates.Contains(pObserve))
-                               bConsistent = false;
-                            if (pObserve.Negation == true && sNextOther.Predicates.Contains(pObserve))
+                            bool bStateValue = sNextOther.Predicates.Contains(pObserve);
+                            if (bAssumedRealValue != bStateValue)
+                            {
                                 bConsistent = false;
+                                bMeaningfulAction = true;
+                            }
+                        }
+                        if (bConsistent)
+                        {
+                            if (!Equals(sNextOther, s))
+                                bMeaningfulAction = true;
+                            lNextOthers.Add(sNextOther);
+                        }
+                    }
+
+                    if (bMeaningfulAction)
+                    {
+                        double dH = ComputeHAdd(NextState, lNextOthers);
+                        ActionsScores.Add(action, dH);
+
+                        if (dBestValue > dH) //cost to go heuristic, we hence need the minimal cost
+                        {
+                            dBestValue = dH;
+                            aBest = action;
+                            sBestNext = NextState;
+                            lBestNext = lNextOthers;
 
                         }
-                        if(bConsistent)
-                            lNextOthers.Add(sNextOther);
-                    }
-                    
-                    double dH = ComputeHAdd(NextState, lNextOthers);
-                    ActionsScores.Add(action, dH);
-
-                    if(dBestValue < dH)
-                    {
-                        dBestValue = dH;
-                        aBest = action;
-                        sBestNext = NextState;
-                        lBestNext = lNextOthers;
-
                     }
                 }
 
@@ -119,25 +128,44 @@ namespace CPORLib.Algorithms
             return (aBest,sBestNext, lBestNext) ;
         }
 
-        private bool Contains(ISet<Predicate>[] hsAll, Predicate p)
+        private bool Contains(ISet<Predicate>[] hsAll, bool[] aValidState, Predicate p)
         {
-            foreach (ISet<Predicate> s in hsAll)
-                if (!s.Contains(p))
-                    return false;
+            for (int i = 0; i < hsAll.Length; i++)
+            {
+                if (aValidState[i])
+                {
+                    if (!hsAll[i].Contains(p))
+                        return false;
+                }
+            }
             return true;
         }
 
-        public double ComputeHAdd(State sAssumedReal, List<State> lOthers)
+        public double ComputeHAdd(State sAssumedReal, ISet<State> lOthers)
         {
             if (lOthers.Count == 0)
                 return ComputeHAdd(sAssumedReal);
 
             Init();
+
+
+            if(HeuristicsCache.TryGetValue(sAssumedReal, out Dictionary<ISet<State>,double> cache))
+            {
+                if (cache.TryGetValue(lOthers, out double v))
+                    return v;
+            }
+            else
+            {
+                HeuristicsCache[sAssumedReal] = new Dictionary<ISet<State>, double>(new SetComparer());
+            }
+
+
             List<State> lAll = new List<State>();
             lAll.Add(sAssumedReal);
-            if (lOthers != null)
-                lAll.AddRange(lOthers);
 
+            lAll.AddRange(lOthers);
+
+            bool[] aValidStates = new bool[lAll.Count];
             ISet<Predicate>[] hsAllChanging = new ISet<Predicate>[lAll.Count];
             ISet<Predicate>[] hsAll = new ISet<Predicate>[lAll.Count];
             List<ISet<Predicate>>[] lLevels = new List<ISet<Predicate>>[lAll.Count];
@@ -145,6 +173,7 @@ namespace CPORLib.Algorithms
 
             for (int i = 0; i < lAll.Count; i++)
             {
+                aValidStates[i] = true;
                 hsAllChanging[i] = new GenericArraySet<Predicate>();
                 State s = lAll[i];
                 foreach (GroundedPredicate gp in s.ChangingPredicates)
@@ -156,7 +185,7 @@ namespace CPORLib.Algorithms
 
             foreach (Predicate p in hsAllChanging[0])
             {
-                if (Contains(hsAllChanging, p))
+                if (Contains(hsAllChanging, aValidStates, p))
                     hsAgreedChanging.Add(p);
             }
             ISet<Predicate> hsAgreedAll = new UnifiedSet<Predicate>(AlwaysConstant, hsAgreedChanging);
@@ -221,32 +250,48 @@ namespace CPORLib.Algorithms
                     {
                         for (int i = 0; i < lAll.Count; i++)
                         {
-                            Formula cf = a.GetApplicableEffects(hsAll[i], false);
-                            foreach (GroundedPredicate gpEffect in cf.GetAllPredicates())
+                            ISet<Predicate> lEffects  = a.GetApplicableEffects(hsAll[i], false);
+                            foreach (GroundedPredicate gpEffect in lEffects)
                             {
-                                if (!hsAllChanging[i].Contains(gpEffect))
+                                if (!gpEffect.Negation)
                                 {
-                                    hsNextLevel[i].Add(gpEffect);
-                                    hsAllChanging[i].Add(gpEffect);
+                                    if (!hsAllChanging[i].Contains(gpEffect))
+                                    {
+                                        hsNextLevel[i].Add(gpEffect);
+                                    }
                                 }
                             }
                         }
 
-                        if (a.Observe != null)
+                        if (a.Observe != null)//maybe this should be done before all the actuation actions, beacuse they modify the state.
                         {
-                            Console.Write("*");
+                            Predicate pObserve = ((PredicateFormula)a.Observe).Predicate;
+                            bool bAssumedRealValue = hsAllChanging[0].Contains(pObserve);
+                            for(int i = 1; i<lAll.Count;i++)
+                            {
+                                bool bStateValue = hsAllChanging[i].Contains(pObserve);
+                                if(bStateValue != bAssumedRealValue)
+                                {
+                                    aValidStates[i] = false;
+                                }
+                            }
                         }
                     }
                 }
 
-                foreach (GroundedPredicate p in hsNextLevel[0])
+                for (int i = 0; i < lAll.Count; i++)
                 {
-                    if (Contains(hsAllChanging, p))
+                    foreach (GroundedPredicate p in hsNextLevel[i])
                     {
-                        //add to agreed
-                        if (hsGoal.Contains(p) && !dGoalCosts.ContainsKey(p))
-                            dGoalCosts[p] = cLevels + 1;
-                        hsAgreedChanging.Add(p);
+                        hsAllChanging[i].Add(p);
+
+                        if (Contains(hsAllChanging, aValidStates, p))
+                        {
+                            //add to agreed
+                            if (hsGoal.Contains(p) && !dGoalCosts.ContainsKey(p))
+                                dGoalCosts[p] = cLevels + 1;
+                            hsAgreedChanging.Add(p);
+                        }
                     }
                 }
 
@@ -265,7 +310,12 @@ namespace CPORLib.Algorithms
             }
 
             if (hsGoal.Count != dGoalCosts.Count)
-                return double.MaxValue;
+            {
+                //it is not impossible to get here - it may be that in the real world we can distnguish between states, but in delete relaxation we cannot
+                //this may mean that the heuristic here is meaningless
+                //in the meantime, assuming no deadends, returning the number of levels - 1
+                return lLevels[0].Count - 1;
+            }
 
             int iSum = 0;
             foreach (int iValue in dGoalCosts.Values)
@@ -273,7 +323,33 @@ namespace CPORLib.Algorithms
                 iSum += iValue;
             }
 
+            HeuristicsCache[sAssumedReal][lOthers] = iSum;
+
             return iSum;
+        }
+
+
+        class SetComparer : IEqualityComparer<ISet<State>>
+        {
+            public bool Equals(ISet<State> x, ISet<State> y)
+            {
+                if(x.Count != y.Count) 
+                    return false;
+                foreach(State s in x)
+                {
+                    if(!y.Contains(s)) 
+                        return false;
+                }
+                return true;
+            }
+
+            public int GetHashCode(ISet<State> obj)
+            {
+                int iSum = 0;
+                foreach(State s in obj)
+                    iSum += s.GetHashCode();
+                return iSum;
+            }
         }
     }
 }

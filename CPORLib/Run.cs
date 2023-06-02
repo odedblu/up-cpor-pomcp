@@ -81,36 +81,38 @@ namespace CPORLib
         public static void RunPOMCPPlanner(string sDomainFile, string sProblemFile, string sOutputFile, bool bOnline, bool bValidate = false)
         {
 
-            Debug.WriteLine("Reading domain and problem");
-            Parser parser = new Parser();
-            Domain domain = parser.ParseDomain(sDomainFile);
-            Problem problem = parser.ParseProblem(sProblemFile, domain);
-            Debug.WriteLine("Done reading domain and problem");
-
-
-
-            double EXPLORATION_FACTOR_UCB = 50.0;
-            double DISCOUNT_FACTOR = 0.95;
-            double DEPTH_THRESHOLD = 0.55;
-            int SIMULATIONS = 500;
-
-            //IRolloutPolicy RolloutPolicy = new GuyHaddHeuristuc(domain, problem);
-            IRolloutPolicy RolloutPolicy = new SDRwithHAddHeuristic(domain, problem);
-
-            IActionSelectPolicy ActionSelectPolicy = new UCBValueActionSelectPolicy(EXPLORATION_FACTOR_UCB);
-            IActionSelectPolicy FinalActionSelectPolicy = new MaxValueActionSelectPolicy();
-
-
-
-            //ObservationPomcpNode root = new ObservationPomcpNode(new PartiallySpecifiedState(problem.GetInitialBelief()), null);
-            PomcpAlgorithm pomcpAlgorithm = new PomcpAlgorithm(DISCOUNT_FACTOR, DEPTH_THRESHOLD, SIMULATIONS, problem, FinalActionSelectPolicy, ActionSelectPolicy, RolloutPolicy, RewardFunctions.GeneralReward);
-            List<PlanningAction> plan = pomcpAlgorithm.FindPlan(true);
-            foreach (PlanningAction action in plan)
+            for (int i = 0; i < 10; i++)
             {
-                Console.WriteLine(action.Name);
+
+                Debug.WriteLine("Reading domain and problem");
+                Parser parser = new Parser();
+                Domain domain = parser.ParseDomain(sDomainFile);
+                Problem problem = parser.ParseProblem(sProblemFile, domain);
+                Debug.WriteLine("Done reading domain and problem");
+
+
+
+                double EXPLORATION_FACTOR_UCB = 50.0;
+                double DISCOUNT_FACTOR = 0.95;
+                double DEPTH_THRESHOLD = 0.55;
+                int SIMULATIONS = 500;
+
+                //IRolloutPolicy RolloutPolicy = new GuyHaddHeuristuc(domain, problem);
+                IRolloutPolicy RolloutPolicy = new SDRwithHAddHeuristic(domain, problem);
+
+                IActionSelectPolicy ActionSelectPolicy = new UCBValueActionSelectPolicy(EXPLORATION_FACTOR_UCB);
+                IActionSelectPolicy FinalActionSelectPolicy = new MaxValueActionSelectPolicy();
+
+
+
+                //ObservationPomcpNode root = new ObservationPomcpNode(new PartiallySpecifiedState(problem.GetInitialBelief()), null);
+                PomcpAlgorithm pomcpAlgorithm = new PomcpAlgorithm(DISCOUNT_FACTOR, DEPTH_THRESHOLD, SIMULATIONS, problem, FinalActionSelectPolicy, ActionSelectPolicy, RolloutPolicy, RewardFunctions.GeneralReward);
+                List<PlanningAction> plan = pomcpAlgorithm.FindPlan(true);
+                foreach (PlanningAction action in plan)
+                {
+                    Console.WriteLine(action.Name);
+                }
             }
-
-
         }
 
         public static void RunPlanner(string sDomainFile, string sProblemFile, string sOutputFile, bool bOnline, bool bValidate = false)
