@@ -66,8 +66,6 @@ namespace CPORLib.Algorithms
 
             foreach (Action a in AllGroundedActions)
             {
-
-
                 Action aTag = new Action(a.Name);
                 bool bValidAction = true;
                 if (a.Preconditions != null)
@@ -112,7 +110,8 @@ namespace CPORLib.Algorithms
                     if (a.Observe == null)
                         ActuationActionPreconditions[Utilities.TRUE_PREDICATE].Add(cActions);
                 }
-                aTag.Effects = a.Effects;
+                aTag.SetEffects(a.Effects);
+                
                 aTag.Observe = a.Observe;
 
                 if (bValidAction)

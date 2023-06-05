@@ -83,7 +83,7 @@ namespace CPORLib
 
             for (int i = 0; i < 5; i++)
             {
-
+                DateTime dtStart = DateTime.Now;
                 Debug.WriteLine("Reading domain and problem");
                 Parser parser = new Parser();
                 Domain domain = parser.ParseDomain(sDomainFile);
@@ -114,6 +114,8 @@ namespace CPORLib
                 {
                     Console.WriteLine(action.Name);
                 }
+                TimeSpan tsTime = (DateTime.Now - dtStart);
+                Console.WriteLine("Time: " + Math.Round(tsTime.TotalSeconds, 4));
                 Console.WriteLine("************************************************\n\n");
             }
         }

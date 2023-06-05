@@ -22,6 +22,9 @@ namespace CPORLib.Algorithms
         public double DiscountFactor { get; set; }
         public double DepthThreshold { get; set; }
 
+
+        public bool PreferRefutation = true;
+
         public int MaxInnerDepth { get; set; }
         public int MaxOuterDepth { get; set; }
 
@@ -560,7 +563,7 @@ namespace CPORLib.Algorithms
             {
                 iOuterDepth++;
 
-                (Action RolloutAction, State NextState, ISet<State> lNextStates) = RolloutPolicy.ChooseAction(CurrentState, lCurrentOthers, false);
+                (Action RolloutAction, State NextState, ISet<State> lNextStates) = RolloutPolicy.ChooseAction(CurrentState, lCurrentOthers, PreferRefutation);
 
                 lStates.Add(CurrentState);
                 lActions.Add(RolloutAction);
@@ -591,8 +594,8 @@ namespace CPORLib.Algorithms
             if (iOuterDepth == MaxOuterDepth)
             {
                 failures++;
-                if (failures % 100 == 0)
-                    Console.WriteLine("Failures: " + failures + "/" + counter);
+                //if (failures % 100 == 0)
+                //    Console.WriteLine("Failures: " + failures + "/" + counter);
             }
             return Reward;
         }

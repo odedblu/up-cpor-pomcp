@@ -32,6 +32,8 @@ namespace CPORLib.PlanningModel
         public int Time { get; private set; }
         public int ChoiceCount { get; private set; }
 
+        private Dictionary<string, State> m_dSuccssessors;
+
         public static int STATE_COUNT = 0;
 
         public State(Problem p)
@@ -53,6 +55,8 @@ namespace CPORLib.PlanningModel
                 FunctionValues[sFunction] = 0.0;
             }
             History = new List<string>();
+
+            m_dSuccssessors = new Dictionary<string, State>();
             //History.Add(ToString());
         }
         public State(State sPredecessor)
@@ -73,6 +77,7 @@ namespace CPORLib.PlanningModel
                 FunctionValues[p.Key] = p.Value;
             Time = sPredecessor.Time + 1;
             MaintainNegations = sPredecessor.MaintainNegations;
+            m_dSuccssessors = new Dictionary<string, State>();
         }
 
         public bool ConsistentWith(Predicate p)
@@ -212,6 +217,10 @@ namespace CPORLib.PlanningModel
             //Debug.WriteLine("Executing " + a.Name);
             if (a is ParametrizedAction)
                 return null;
+
+            if (m_dSuccssessors.TryGetValue(a.Name, out State s))
+                return s;
+
             ISet<Predicate> all = new UnifiedSet<Predicate>(m_lFixedAndKnown, m_lFixedAndHidden, m_lChangingPredicates);
 
             //if (m_lPredicates.Count != all.Count)
@@ -252,10 +261,21 @@ namespace CPORLib.PlanningModel
                     sNew.AddEffect(p);
                 //sNew.AddEffects(a.Effects);
             }
+            /*
             if (!MaintainNegations)
-                sNew.RemoveNegativePredicates();
+            {
+                bool b = sNew.RemoveNegativePredicates();
+                
+            }
+            */
             if (sNew.Predicates.Contains(Utilities.FALSE_PREDICATE))
                 Debug.WriteLine("BUGBUG");
+
+            if(!a.HasConditionalEffects)
+            {
+                m_dSuccssessors[a.Name] = sNew;
+            }
+
             return sNew;
         }
         private void AddEffect(Predicate pEffect)
@@ -282,7 +302,7 @@ namespace CPORLib.PlanningModel
 
                 RemovePredicate(pNegateEffect);
 
-                AddPredicate(pEffect);//we are maintaining complete state information
+                    AddPredicate(pEffect);
             }
         }
         private void AddEffects(Formula fEffects)
@@ -434,8 +454,9 @@ namespace CPORLib.PlanningModel
             throw new NotImplementedException("Not handling compound formulas for observations");
         }
 
-        public void RemoveNegativePredicates()
+        public bool RemoveNegativePredicates()
         {
+            bool bFiltered = false;
             ISet<Predicate> lFiltered = new GenericArraySet<Predicate>();
             foreach (Predicate pObserved in m_lChangingPredicates)
             {
@@ -443,6 +464,9 @@ namespace CPORLib.PlanningModel
                 {
                     lFiltered.Add(pObserved);
                 }
+                else
+                    bFiltered = true;
+
             }
             m_lChangingPredicates = lFiltered;
 
@@ -453,6 +477,9 @@ namespace CPORLib.PlanningModel
                 {
                     lFiltered.Add(pObserved);
                 }
+                else
+                    bFiltered = true;
+
             }
             m_lFixedAndKnown = lFiltered;
 
@@ -463,10 +490,13 @@ namespace CPORLib.PlanningModel
                 {
                     lFiltered.Add(pObserved);
                 }
+                else
+                    bFiltered = true;
             }
             m_lFixedAndHidden = lFiltered;
 
             MaintainNegations = false;
+            return bFiltered;
         }
 
         private string m_sToString = null;

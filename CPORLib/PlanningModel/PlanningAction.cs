@@ -25,6 +25,8 @@ namespace CPORLib.PlanningModel
 
         private Dictionary<Predicate, Formula> m_mRegressions;
 
+        private ISet<Predicate> m_sCachedEffects;
+
         public bool HasConditionalEffects { get; protected set; }
 
         private PlanningAction m_aOriginal;
@@ -45,6 +47,8 @@ namespace CPORLib.PlanningModel
             Name = sName;
             m_mMapConditionsChoices = new Dictionary<int, List<int>>();
             ID = IDs++;
+            //if (ID == 40)
+            //    Console.Write("*");
             NonDeterministicEffects = new HashSet<Predicate>();
         }
 
@@ -66,6 +70,13 @@ namespace CPORLib.PlanningModel
         {
             //BUGBUG: sometimes we get in the effects (and p (not p)) (woodworking). In that case the formula will contain P_FALSE. Assuming for now that if this is the case, then nothing changes.
             //BUGBUG: for now implementing in a very shallow way
+
+            if(f == null)
+            {
+                Effects = null;
+                return;
+            }
+
             CompoundFormula fRemovePFalse = new CompoundFormula("and");
             if (f is CompoundFormula cf)
             {
@@ -218,6 +229,9 @@ namespace CPORLib.PlanningModel
 
         public ISet<Predicate> GetApplicableEffects(ISet<Predicate> lPredicates, bool bContainsNegations)
         {
+            if (m_sCachedEffects != null)
+                return m_sCachedEffects;
+
             List<CompoundFormula> lConditions = new List<CompoundFormula>();
             List<Formula> lObligatory = new List<Formula>();
             ISet<Predicate> lEffects = new GenericArraySet<Predicate>();
@@ -250,7 +264,10 @@ namespace CPORLib.PlanningModel
 
                 iCondition++;
             }
-            
+
+            if (!HasConditionalEffects)
+                m_sCachedEffects = lEffects;
+
             return lEffects;
         }
 

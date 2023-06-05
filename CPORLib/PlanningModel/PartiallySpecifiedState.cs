@@ -1027,10 +1027,9 @@ namespace CPORLib.PlanningModel
             if (a.Observe != null && a.Effects != null)
                 throw new NotImplementedException();
 
-            a = a.RemoveNonDeterministicEffects(m_bsInitialBelief);
+            
+            //a = a.RemoveNonDeterministicEffects(m_bsInitialBelief);
 
-            Action aTag = a.ApplyObserved(m_lObserved); //for removing all generaly known items from the computations.
-            a = aTag;
 
             Formula fPreconditions = a.Preconditions;
             if (fPreconditions != null && !IsApplicable(a))
@@ -1038,6 +1037,8 @@ namespace CPORLib.PlanningModel
                 bPreconditionFailure = true;
                 return;
             }
+            Action aTag = a.ApplyObserved(m_lObserved); //for removing all generaly known items from the computations.
+            a = aTag;
             PartiallySpecifiedState bsNew = new PartiallySpecifiedState(this, a);
 
 
