@@ -529,9 +529,14 @@ namespace CPORLib.Algorithms
             return Reward;
         }
 
-
+        int counter = 0;
         public double ForRollout(State sAssumedReal, ISet<State> lOthers, int currentDepth)
         {
+            counter++;
+
+            //if (counter == 145)
+            //    Console.Write("*");
+
             State CurrentState = sAssumedReal;
             ISet<State> lCurrentOthers = new HashSet<State>(lOthers);
 
@@ -555,7 +560,7 @@ namespace CPORLib.Algorithms
             {
                 iOuterDepth++;
 
-                (Action RolloutAction, State NextState, ISet<State> lNextStates) = RolloutPolicy.ChooseAction(CurrentState, lCurrentOthers);
+                (Action RolloutAction, State NextState, ISet<State> lNextStates) = RolloutPolicy.ChooseAction(CurrentState, lCurrentOthers, false);
 
                 lStates.Add(CurrentState);
                 lActions.Add(RolloutAction);
@@ -583,10 +588,16 @@ namespace CPORLib.Algorithms
                 CurrentState = NextState;
                 lCurrentOthers = lNextStates;
             }
+            if (iOuterDepth == MaxOuterDepth)
+            {
+                failures++;
+                if (failures % 100 == 0)
+                    Console.WriteLine("Failures: " + failures + "/" + counter);
+            }
             return Reward;
         }
 
-
+        int failures = 0;
 
 
         public List<Action> FindPlan(bool verbose=false)

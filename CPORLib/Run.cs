@@ -81,7 +81,7 @@ namespace CPORLib
         public static void RunPOMCPPlanner(string sDomainFile, string sProblemFile, string sOutputFile, bool bOnline, bool bValidate = false)
         {
 
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 5; i++)
             {
 
                 Debug.WriteLine("Reading domain and problem");
@@ -108,10 +108,13 @@ namespace CPORLib
                 //ObservationPomcpNode root = new ObservationPomcpNode(new PartiallySpecifiedState(problem.GetInitialBelief()), null);
                 PomcpAlgorithm pomcpAlgorithm = new PomcpAlgorithm(DISCOUNT_FACTOR, DEPTH_THRESHOLD, SIMULATIONS, problem, FinalActionSelectPolicy, ActionSelectPolicy, RolloutPolicy, RewardFunctions.GeneralReward);
                 List<PlanningAction> plan = pomcpAlgorithm.FindPlan(true);
+
+                Console.WriteLine("\n\nGoal reached. Plan:");
                 foreach (PlanningAction action in plan)
                 {
                     Console.WriteLine(action.Name);
                 }
+                Console.WriteLine("************************************************\n\n");
             }
         }
 

@@ -21,11 +21,8 @@ namespace CPORLib.Algorithms
             HeuristicsCache = new Dictionary<State, Dictionary<ISet<State>, double>>();
         }
 
-        
-
-
-
-        public override (Action, State, ISet<State>) ChooseAction(State sAssumedReal, ISet<State> lOthers)
+ 
+        public override (Action, State, ISet<State>) ChooseAction(State sAssumedReal, ISet<State> lOthers, bool bPreferRefutation)
         {
             Init();
 
@@ -34,10 +31,12 @@ namespace CPORLib.Algorithms
             Action aBest = null;
             State sBestNext = null;
             ISet<State> lBestNext = null;
-            
+            Dictionary<Action, double> ActionsScores = null;
+
+
             if (!StateResultCache.ContainsKey(sAssumedReal))//leaving it here although for now we will not cache
             {
-                Dictionary<Action, double> ActionsScores = new Dictionary<Action, double>();
+                ActionsScores = new Dictionary<Action, double>();
 
                 List<Action> validActions = new List<Action>();
                 foreach (Action a in GroundedActuationActions)
@@ -105,18 +104,26 @@ namespace CPORLib.Algorithms
                         }
                     }
 
+                    //double d = ComputeHAdd(sAssumedReal, lOthers);
+
                     if (bMeaningfulAction)
                     {
-                        double dH = ComputeHAdd(NextState, lNextOthers);
+                        double dH = 0.0;
+                        if (bPreferRefutation && action.Observe != null)
+                            dH = 0;
+                        else
+                            dH = ComputeHAdd(NextState, lNextOthers, bPreferRefutation);
                         ActionsScores.Add(action, dH);
 
-                        if (dBestValue > dH) //cost to go heuristic, we hence need the minimal cost
+                        if (dBestValue > dH || //cost to go heuristic, we hence need the minimal cost
+                            //(dBestValue == dH && RandomGenerator.NextDouble() < 0.5)
+                            (dBestValue == dH && action.Observe != null)
+                            )
                         {
                             dBestValue = dH;
                             aBest = action;
                             sBestNext = NextState;
                             lBestNext = lNextOthers;
-
                         }
                     }
                 }
@@ -141,7 +148,234 @@ namespace CPORLib.Algorithms
             return true;
         }
 
-        public double ComputeHAdd(State sAssumedReal, ISet<State> lOthers)
+
+
+        public double ComputeHAdd(State sAssumedReal, ISet<State> lOthers, bool bPreferRefutation)
+        {
+            if (lOthers.Count == 0)
+                return ComputeHAdd(sAssumedReal);
+
+            Init();
+
+
+            if (!bPreferRefutation)
+            {
+                if (HeuristicsCache.TryGetValue(sAssumedReal, out Dictionary<ISet<State>, double> cache))
+                {
+                    if (cache.TryGetValue(lOthers, out double v))
+                        return v;
+                }
+                else
+                {
+                    HeuristicsCache[sAssumedReal] = new Dictionary<ISet<State>, double>(new SetComparer());
+                }
+            }
+
+
+            List<State> lAll = new List<State>();
+            lAll.Add(sAssumedReal);
+
+            lAll.AddRange(lOthers);
+
+            bool[] aValidStates = new bool[lAll.Count];
+            ISet<Predicate>[] hsAllChanging = new ISet<Predicate>[lAll.Count];
+            ISet<Predicate>[] hsAll = new ISet<Predicate>[lAll.Count];
+            List<ISet<Predicate>>[] lLevels = new List<ISet<Predicate>>[lAll.Count];
+
+            for (int i = 0; i < lAll.Count; i++)
+            {
+                aValidStates[i] = true;
+                hsAllChanging[i] = new GenericArraySet<Predicate>();
+                State s = lAll[i];
+                foreach (GroundedPredicate gp in s.ChangingPredicates)
+                    hsAllChanging[i].Add(gp);
+                hsAll[i] = new UnifiedSet<Predicate>(AlwaysConstant, s.FixedHiddenPredicates, hsAllChanging[i]);
+                lLevels[i] = new List<ISet<Predicate>>();
+                lLevels[i].Add(new GenericArraySet<Predicate>(hsAllChanging[i]));
+            }
+
+            
+
+            int cLevels = 0;
+            bool bDone = false;
+            Dictionary<GroundedPredicate, int> dGoalCosts = new Dictionary<GroundedPredicate, int>();
+
+            ISet<Predicate> hsGoal = new GenericArraySet<Predicate>();
+            bDone = true;
+            foreach (GroundedPredicate gp in Problem.Goal.GetAllPredicates())
+            {
+                hsGoal.Add(gp);
+
+                if (Contains(hsAll, aValidStates, gp))
+                    dGoalCosts[gp] = 0;
+                else
+                    bDone = false;
+            }
+
+
+            bool[] aAlreadyExecutedActions = new bool[AllGroundedActions.Count];
+
+            while (!bDone)
+            {
+                HashSet<int> hsActions = new HashSet<int>();
+                foreach (int iAction in AllActionPreconditions[Utilities.TRUE_PREDICATE])
+                    hsActions.Add(iAction);
+
+                UnifiedSet<Predicate> sRelevant = new UnifiedSet<Predicate>(sAssumedReal.FixedHiddenPredicates, hsAllChanging[0]);
+
+                foreach (GroundedPredicate gp in sRelevant) 
+                {
+                    if (AllActionPreconditions.ContainsKey(gp))
+                    {
+                        foreach (int iAction in AllActionPreconditions[gp])
+                        {
+                            hsActions.Add(iAction);
+                        }
+                    }
+                }
+                ISet<Predicate>[] hsNextLevel = new GenericArraySet<Predicate>[lAll.Count];
+                for (int i = 0; i < lAll.Count; i++)
+                    hsNextLevel[i] = new GenericArraySet<Predicate>();
+                hsActions.UnionWith(ConditionalActions);
+
+                bool bInvalidatedState = false;
+
+                foreach (int iAction in hsActions)
+                {
+                    Action a = AllGroundedActions[iAction];
+
+                    //if (a.Name.Contains("p5-4"))
+                    //    Console.Write("*");
+
+                    if (aAlreadyExecutedActions[iAction] && !a.HasConditionalEffects)
+                        continue;
+
+                    bool bContainsAll = true;
+                    if (a.Preconditions != null)
+                    {
+                        ISet<Predicate> hsPreconditions = a.Preconditions.GetAllPredicates();
+                        foreach (GroundedPredicate gp in hsPreconditions)
+                        {
+                            if (!gp.Negation)
+                            {
+                                if (!Contains(hsAll, aValidStates, gp))
+                                {
+                                    bContainsAll = false;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (bContainsAll)
+                    {
+                        aAlreadyExecutedActions[iAction] = true;
+                        for (int i = 0; i < lAll.Count; i++)
+                        {
+                            if (aValidStates[i])
+                            {
+                                ISet<Predicate> lEffects = a.GetApplicableEffects(hsAll[i], false);
+                                foreach (GroundedPredicate gpEffect in lEffects)
+                                {
+                                    if (!gpEffect.Negation)
+                                    {
+                                        if (!hsAllChanging[i].Contains(gpEffect))
+                                        {
+                                            hsNextLevel[i].Add(gpEffect);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if (a.Observe != null)//maybe this should be done before all the actuation actions, beacuse they modify the state.
+                        {
+                            Predicate pObserve = ((PredicateFormula)a.Observe).Predicate;
+                            bool bAssumedRealValue = hsAll[0].Contains(pObserve);
+                            for (int i = 1; i < lAll.Count; i++)
+                            {
+                                if (aValidStates[i])
+                                {
+                                    bool bStateValue = hsAll[i].Contains(pObserve);
+                                    if (bStateValue != bAssumedRealValue)
+                                    {
+                                        aValidStates[i] = false;
+                                        bInvalidatedState = true;
+
+                                        if (bPreferRefutation)
+                                            return lLevels[0].Count() + 1;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                for (int i = 0; i < lAll.Count; i++)
+                {
+                    if (aValidStates[i])
+                    {
+                        foreach (GroundedPredicate p in hsNextLevel[i])
+                        {
+                            hsAllChanging[i].Add(p);
+
+                            if (hsGoal.Contains(p) && !dGoalCosts.ContainsKey(p))
+                            {
+                                if (Contains(hsAllChanging, aValidStates, p))
+                                {
+                                    dGoalCosts[p] = cLevels + 1;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                bDone = true;
+                for (int i = 0; i < lAll.Count; i++)
+                {
+                    if (aValidStates[i])
+                    {
+                        lLevels[i].Add(hsNextLevel[i]);
+                        if (hsNextLevel[i].Count > 0)
+                            bDone = false;
+                    }
+                }
+                if (bInvalidatedState)
+                    bDone = false;
+
+                cLevels++;
+
+
+                if (dGoalCosts.Count == hsGoal.Count)
+                    bDone = true;
+            }
+
+            if (hsGoal.Count != dGoalCosts.Count)
+            {
+                //it is not impossible to get here - it may be that in the real world we can distnguish between states, but in delete relaxation we cannot
+                //this may mean that the heuristic here is meaningless
+                //in the meantime, assuming no deadends, returning the number of levels - 1
+                return lLevels[0].Count - 1;
+            }
+
+            int iSum = 0;
+            foreach (int iValue in dGoalCosts.Values)
+            {
+                iSum += iValue;
+            }
+
+            foreach (bool bValid in aValidStates)
+                if (!bValid)
+                    iSum++;
+
+            if (!bPreferRefutation)
+                HeuristicsCache[sAssumedReal][lOthers] = iSum;
+
+            return iSum;
+        }
+
+
+
+        public double ComputeHAddII(State sAssumedReal, ISet<State> lOthers)
         {
             if (lOthers.Count == 0)
                 return ComputeHAdd(sAssumedReal);

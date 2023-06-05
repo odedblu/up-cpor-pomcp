@@ -54,7 +54,7 @@ namespace CPORLib.Algorithms
             return ActionScores.ElementAt(SelectedIndex).Key;
         }
 
-        public (PlanningAction, State, ISet<State>) ChooseAction(State s, ISet<State> l)
+        public (PlanningAction, State, ISet<State>) ChooseAction(State s, ISet<State> l, bool bPreferRefutation)
         {
             throw new NotImplementedException();
         }

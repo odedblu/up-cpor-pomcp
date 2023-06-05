@@ -181,6 +181,17 @@ namespace CPORLib.Tools
         {
             throw new NotImplementedException();
         }
+
+        public override string ToString()
+        {
+            string s = "[";
+            foreach(T item in Items)
+            {
+                s += item.ToString() + ",";
+            }
+            s+= "]";
+            return s;
+        }
     }
 
 }

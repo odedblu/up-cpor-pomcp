@@ -69,7 +69,7 @@ namespace CPORLib.Algorithms
 
 
                 Action aTag = new Action(a.Name);
-
+                bool bValidAction = true;
                 if (a.Preconditions != null)
                 {
                     CompoundFormula cfPreconditions = new CompoundFormula("and");
@@ -90,6 +90,19 @@ namespace CPORLib.Algorithms
                                 ActuationActionPreconditions[gp].Add(cActions);
                             }
                         }
+                        else
+                        {
+                            if(gp.Negation)
+                            {
+                                if (Problem.Known.Contains(gp.Negate()))
+                                    bValidAction = false;
+                            }
+                            else
+                            {
+                                if (!Problem.Known.Contains(gp))
+                                    bValidAction = false;
+                            }
+                        }
                     }
                     aTag.Preconditions = cfPreconditions;
                 }
@@ -101,10 +114,14 @@ namespace CPORLib.Algorithms
                 }
                 aTag.Effects = a.Effects;
                 aTag.Observe = a.Observe;
-                GroundedActuationActions.Add(aTag);
-                if (aTag.Effects != null && a.Effects.ContainsCondition())
-                    ConditionalActions.Add(cActions);
-                cActions++;
+
+                if (bValidAction)
+                {
+                    GroundedActuationActions.Add(aTag);
+                    if (aTag.Effects != null && a.Effects.ContainsCondition())
+                        ConditionalActions.Add(cActions);
+                    cActions++;
+                }
 
             }
             m_bInitialized = true;
@@ -299,7 +316,7 @@ namespace CPORLib.Algorithms
             return iSum;
         }
 
-        public virtual (PlanningAction, State, ISet<State>) ChooseAction(State s, ISet<State> l)
+        public virtual (PlanningAction, State, ISet<State>) ChooseAction(State s, ISet<State> l, bool bPreferRefutation)
         {
             throw new NotImplementedException();
         }
