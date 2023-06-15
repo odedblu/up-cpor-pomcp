@@ -11,7 +11,7 @@ namespace CPORLib.Algorithms
     internal class ObservationPomcpNode : PomcpNode
     {
 
-        public BelifeParticles ParticleFilter;
+        public BeliefParticles ParticleFilter;
         public List<Predicate> ObservedPredicates;
         public PartiallySpecifiedState PartiallySpecifiedState;
         public Formula Observation { get; set; }
@@ -24,14 +24,14 @@ namespace CPORLib.Algorithms
             Children = new Dictionary<int, PomcpNode>();
             VisitedCount = 0;
             Value = 0;
-            ParticleFilter = new BelifeParticles();
+            ParticleFilter = new BeliefParticles();
             ObservedPredicates = null;
             PartiallySpecifiedState = partiallySpecifiedState;
             Observation = observation;
         }
 
         public ObservationPomcpNode(ActionPomcpNode ActionParentNode, List<Predicate> Observed, 
-            PartiallySpecifiedState partiallySpecifiedState, BelifeParticles particleFilter, Formula observation)
+            PartiallySpecifiedState partiallySpecifiedState, BeliefParticles particleFilter, Formula observation)
         {
             Parent = ActionParentNode;
             Children = new Dictionary<int, PomcpNode>();
@@ -45,7 +45,7 @@ namespace CPORLib.Algorithms
 
         }
 
-        public ObservationPomcpNode(ActionPomcpNode ActionParentNode, PartiallySpecifiedState partiallySpecifiedState, BelifeParticles particleFilter, Formula observation)
+        public ObservationPomcpNode(ActionPomcpNode ActionParentNode, PartiallySpecifiedState partiallySpecifiedState, BeliefParticles particleFilter, Formula observation)
         {
             Parent = ActionParentNode;
             Children = new Dictionary<int, PomcpNode>();

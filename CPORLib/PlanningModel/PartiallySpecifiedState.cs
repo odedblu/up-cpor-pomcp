@@ -88,6 +88,8 @@ namespace CPORLib.PlanningModel
         {
             oldId = original.ID;
             ID = STATE_COUNT++;
+            //if (ID == 1574)
+             //   Console.Write("*");
 
             IdentifiedDeadendStates = new List<State>();
 
@@ -211,7 +213,7 @@ namespace CPORLib.PlanningModel
 
                     if (daedend is PredicateFormula)
                     {
-                        Formula resuceDeadEnd = daedend.Reduce(m_lObserved);
+                        Formula resuceDeadEnd = daedend.Reduce(m_lObserved, true);
                         PredicateFormula pre_deadEndForm = (PredicateFormula)resuceDeadEnd;
 
                         Predicate pre_deadEnd = pre_deadEndForm.Predicate;
@@ -229,7 +231,7 @@ namespace CPORLib.PlanningModel
                     }
                     if (daedend is CompoundFormula)
                     {
-                        Formula resuceDeadEnd = daedend.Reduce(m_lObserved);
+                        Formula resuceDeadEnd = daedend.Reduce(m_lObserved, true);
                         if (resuceDeadEnd is PredicateFormula)
                         {
                             PredicateFormula pre_deadEndForm = (PredicateFormula)resuceDeadEnd;
@@ -334,6 +336,7 @@ namespace CPORLib.PlanningModel
         public PartiallySpecifiedState(PartiallySpecifiedState sPredecessor, Action aGeneratingAction)
         {
             ID = STATE_COUNT++;
+
 
             countOfActionFromRoot = sPredecessor.countOfActionFromRoot + 1;
             ChildCount = 0;
@@ -469,7 +472,7 @@ namespace CPORLib.PlanningModel
             int cRegressions = 0;
             while (pssCurrent.m_sPredecessor != null)
             {
-                fReduced = fCurrent.Reduce(pssCurrent.Observed);
+                fReduced = fCurrent.Reduce(pssCurrent.Observed , true);
                 if (fReduced.IsTrue(null))
                     return true;
                 if (fReduced.IsFalse(null))
@@ -492,7 +495,7 @@ namespace CPORLib.PlanningModel
                 fCurrent = fRegressed;
                 pssCurrent = pssCurrent.m_sPredecessor;
             }
-            fReduced = fCurrent.Reduce(pssCurrent.Observed);
+            fReduced = fCurrent.Reduce(pssCurrent.Observed, true);
             if (fReduced.IsTrue(m_bsInitialBelief.Observed))
                 return true;
             if (fReduced.IsFalse(m_bsInitialBelief.Observed))
@@ -543,7 +546,7 @@ namespace CPORLib.PlanningModel
             return true;
         }
 
-        public bool AddObserved(HashSet<Predicate> l)
+        public bool AddObserved(ISet<Predicate> l)
         {
             bool bUpdated = false;
             foreach (Predicate p in l)
@@ -660,7 +663,7 @@ namespace CPORLib.PlanningModel
             if (a.Preconditions == null)
                 return true;
             m_bsInitialBelief.MaintainProblematicTag = true;
-            Formula fReduced = a.Preconditions.Reduce(m_lObserved);
+            Formula fReduced = a.Preconditions.Reduce(m_lObserved, true);
 
             if (fReduced.IsTrue(m_lObserved))
                 return true;
@@ -708,7 +711,7 @@ namespace CPORLib.PlanningModel
                 bool bPossible = ConsistentWith(fDeadend, false);
                 if (bPossible)
                 {
-                    lDeadends.Add(fDeadend.Reduce(m_lObserved)); // here we want the reduced deadend for the deadend sensing plan
+                    lDeadends.Add(fDeadend.Reduce(m_lObserved, true)); // here we want the reduced deadend for the deadend sensing plan
                 }
             }
 
@@ -878,7 +881,7 @@ namespace CPORLib.PlanningModel
                     continue;
                 }
 */
-                Formula reduceDeadEnd = daedendTmp.Reduce(m_lObserved);
+                Formula reduceDeadEnd = daedendTmp.Reduce(m_lObserved, true);
                 //if (daedendTmp.IsTrue(m_lObserved) || reduceDeadEnd.IsTrue(m_lObserved))
 
 
@@ -1027,9 +1030,8 @@ namespace CPORLib.PlanningModel
             if (a.Observe != null && a.Effects != null)
                 throw new NotImplementedException();
 
-            
-            //a = a.RemoveNonDeterministicEffects(m_bsInitialBelief);
 
+            //a = a.RemoveNonDeterministicEffects(m_bsInitialBelief);
 
             Formula fPreconditions = a.Preconditions;
             if (fPreconditions != null && !IsApplicable(a))
@@ -1037,9 +1039,14 @@ namespace CPORLib.PlanningModel
                 bPreconditionFailure = true;
                 return;
             }
-            Action aTag = a.ApplyObserved(m_lObserved); //for removing all generaly known items from the computations.
+            ISet<Predicate> lRelevantOptions = new HashSet<Predicate>();
+
+            Action aTag = a.ApplyObserved(m_lObserved, true, lRelevantOptions); //for removing all generaly known items from the computations.
             a = aTag;
             PartiallySpecifiedState bsNew = new PartiallySpecifiedState(this, a);
+            //if (a.Name.Contains("move"))
+           //     Console.Write("*");
+            bsNew.GeneratingAction = a.RemoveProbabilisticEffects(bsNew.m_bsInitialBelief);
 
 
             ChildCount = 1;
@@ -1116,6 +1123,9 @@ namespace CPORLib.PlanningModel
 
                 if (bConsistentWithTrue)
                 {
+                    //if (bsTrue.ID == 866)
+                    //    Console.Write("*");
+
                     HashSet<int> hsModifiedTrue = bsTrue.m_bsInitialBelief.ReviseInitialBelief(bsTrue.GeneratingObservation, bsTrue);
                     //this is after a split - cannot propagate backwards the observation
                     /*
@@ -1133,6 +1143,10 @@ namespace CPORLib.PlanningModel
 
                 if (bConsistentWithFalse)
                 {
+
+                    //if (bsFalse.ID == 1574)
+                    //    Console.Write("*");
+
                     HashSet<int> hsModifiedFalse = bsFalse.m_bsInitialBelief.ReviseInitialBelief(bsFalse.GeneratingObservation, bsFalse);
                     //this is after a split - cannot propagate backwards the observation
                     /*
@@ -1346,7 +1360,8 @@ namespace CPORLib.PlanningModel
 
             DateTime dtStart = DateTime.Now;
 
-            Action a = aOrg.ApplyObserved(m_lObserved);
+            ISet<Predicate> lRelevantOptions = new HashSet<Predicate>();
+            Action a = aOrg.ApplyObserved(m_lObserved, true, lRelevantOptions);
 
             //no need to check pre during propogation - they were already confirmed the first time
             if (!bPropogateOnly && a.Preconditions != null && !IsApplicable(a))
@@ -1448,7 +1463,8 @@ namespace CPORLib.PlanningModel
             if (aOrg.Observe == null && sObservation != null || aOrg.Observe != null && sObservation == null)
                 return null;
 
-            Action a = aOrg.ApplyObserved(m_lObserved);
+            ISet<Predicate> lRelevantOptions = new HashSet<Predicate>();
+            Action a = aOrg.ApplyObserved(m_lObserved, true, lRelevantOptions);
             
 
             if (a.Preconditions != null && !IsApplicable(a))
@@ -1689,7 +1705,7 @@ namespace CPORLib.PlanningModel
                 fWithObservation.AddOperand(GeneratingObservation);
             Formula fReduced = fWithObservation.Reduce(Observed);
              */
-            Formula fReduced = f.Reduce(Observed);
+            Formula fReduced = f.Reduce(Observed, true);
             Formula fToRegress = fReduced;
             if (fToRegress is CompoundFormula)
             {
@@ -1773,7 +1789,7 @@ namespace CPORLib.PlanningModel
 
 
         //returns true if new things were propogated
-        public HashSet<Predicate> PropogateObservedPredicates(HashSet<Predicate> lNewPredicates)
+        public HashSet<Predicate> PropogateObservedPredicates(ISet<Predicate> lNewPredicates)
         {
             HashSet<Predicate> hsNextNewPredicates = new HashSet<Predicate>();
 
@@ -1781,8 +1797,9 @@ namespace CPORLib.PlanningModel
 
             if (GeneratingAction.Effects != null)
             {
+                ISet<Predicate> lRelevantOptions = new HashSet<Predicate>();
 
-                Action aRevised = GeneratingAction.ApplyObserved(lNewPredicates);
+                Action aRevised = GeneratingAction.ApplyObserved(lNewPredicates, true, lRelevantOptions);
                 foreach (Predicate p in aRevised.GetMandatoryEffects())
                 {
                     if (!m_lObserved.Contains(p))
@@ -2039,7 +2056,7 @@ namespace CPORLib.PlanningModel
             Formula fCurrent = f.Negate();
             while (pssCurrent != null)
             {
-                Formula fReduced = fCurrent.Reduce(pssCurrent.Observed);
+                Formula fReduced = fCurrent.Reduce(pssCurrent.Observed, true);
                 if (fReduced.IsTrue(null))
                     return false;
                 if (fReduced.IsFalse(null))
@@ -2061,7 +2078,7 @@ namespace CPORLib.PlanningModel
         public bool IsGoalState()
         {
             m_bsInitialBelief.MaintainProblematicTag = true;
-            Formula fReduced = Problem.Goal.Reduce(m_lObserved);
+            Formula fReduced = Problem.Goal.Reduce(m_lObserved, true);
             if (fReduced.IsTrue(m_lObserved))
                 return true;
             
@@ -3228,7 +3245,7 @@ namespace CPORLib.PlanningModel
             {
                 lFuture.Add(pssCurrent);
                 steps--;
-                fReduced = fCurrent.Reduce(pssCurrent.Observed);
+                fReduced = fCurrent.Reduce(pssCurrent.Observed, true);
                 if (fReduced.IsTrue(null))
                     return new PredicateFormula(new GroundedPredicate("True"));
                 if (fReduced.IsFalse(null))
@@ -3251,7 +3268,7 @@ namespace CPORLib.PlanningModel
                 fCurrent = fRegressed;
                 pssCurrent = pssCurrent.m_sPredecessor;
             }
-            fReduced = fCurrent.Reduce(pssCurrent.Observed);
+            fReduced = fCurrent.Reduce(pssCurrent.Observed, true);
             return fReduced;
         }
 

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using CPORLib.PlanningModel;
 using CPORLib.Tools;
 
@@ -57,7 +58,7 @@ namespace CPORLib.LogicalUtilities
         public abstract Formula Regress(PlanningAction a, ISet<Predicate> lObserved);
         public abstract Formula Regress(PlanningAction a);
 
-        public abstract Formula Reduce(ISet<Predicate> lKnown);
+        public abstract Formula Reduce(ISet<Predicate> lKnown, bool bContainsNegations);
 
         public override int GetHashCode()
         {
@@ -65,7 +66,7 @@ namespace CPORLib.LogicalUtilities
         }
 
         public abstract bool ContainsNonDeterministicEffect();
-
+        public abstract bool ContainsProbabilisticEffects();
         public abstract int GetMaxNonDeterministicOptions();
 
         public virtual HashSet<Predicate> GetAllOptionalPredicates()
@@ -95,8 +96,10 @@ namespace CPORLib.LogicalUtilities
 
         public abstract Formula GetKnowledgeFormula(List<string> lAlwaysKnown, bool bKnowWhether);
 
-        public abstract Formula ReduceConditions(ISet<Predicate> lKnown);
+        public abstract Formula ReduceConditions(ISet<Predicate> lKnown, bool bContainsNegations, ISet<Predicate> lRelevantOptions);
 
         public abstract Formula RemoveNegations();
+
+        public abstract void GetProbabilisticOptions(List<Formula> lOptions);
     }
 }

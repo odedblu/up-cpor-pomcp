@@ -25,6 +25,11 @@ namespace CPORLib.Tools
 
         public static bool SDR_OBS { set; get; }
 
+        public static bool ForceCNFBelief = false;
+        public enum SatSolverTypes { SolverFoundation, ORTools, Deiruch };
+        public static SatSolverTypes SatSolverType = SatSolverTypes.Deiruch;
+        public static bool SimplifyCompoundFormulas = true;
+
         public static bool RecursiveClosedStates = false;
 
         public enum Translations { SDR, MPSRTagPartitions, MPSRTags, BestCase, Conformant, SingleStateK }

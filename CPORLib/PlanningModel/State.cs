@@ -10,22 +10,27 @@ namespace CPORLib.PlanningModel
 {
     public class State
     {
-        public ISet<Predicate> Predicates { get { return new UnifiedSet<Predicate>(m_lFixedAndKnown, m_lFixedAndHidden, m_lChangingPredicates); } }
+        public ISet<Predicate> Predicates { get { return new UnifiedSet<Predicate>(m_lFixedAndKnown, m_lOptionPredicates, m_lFixedAndHidden, m_lChangingPredicates); } }
 
         //protected HashSet<Predicate> m_lPredicates;
 
         protected ISet<Predicate> m_lFixedAndKnown;
         protected ISet<Predicate> m_lFixedAndHidden;
+        protected ISet<Predicate> m_lOptionPredicates;
         protected ISet<Predicate> m_lChangingPredicates;
 
         public ISet<Predicate> ChangingPredicates { get { return m_lChangingPredicates; } }
         public ISet<Predicate> FixedHiddenPredicates { get { return m_lFixedAndHidden; } }
+        public ISet<Predicate> OptionPredicates { get { return m_lOptionPredicates; } }
 
         public List<Action> AvailableActions { get; set; }
         public State Predecessor { set; get; }
         public PlanningAction GeneratingAction { private set; get; }
+        public PlanningAction OriginalGeneratingAction { private set; get; }
+        public ISet<Predicate> RelevantOptions { private set; get; }
         public List<string> History { private set; get; }
         public bool MaintainNegations { get; private set; }
+        public bool MaintainProbabilisticChoices { get; private set; }
         public Problem Problem { get; private set; }
         public int ID { get; private set; }
         public Dictionary<string, double> FunctionValues { get; private set; }
@@ -44,8 +49,10 @@ namespace CPORLib.PlanningModel
             m_lFixedAndKnown = new GenericArraySet<Predicate>();
             m_lFixedAndHidden = new GenericArraySet<Predicate>();
             m_lChangingPredicates = new GenericArraySet<Predicate>();
+            m_lOptionPredicates = new GenericArraySet<Predicate>();
             AvailableActions = new List<Action>();
             MaintainNegations = true;
+            MaintainProbabilisticChoices = false;
             ID = STATE_COUNT++;
             FunctionValues = new Dictionary<string, double>();
             Time = 0;
@@ -64,9 +71,10 @@ namespace CPORLib.PlanningModel
         {
             Predecessor = sPredecessor;
             //m_lPredicates = new HashSet<Predicate>(sPredecessor.m_lPredicates);
-            m_lChangingPredicates = new HashSet<Predicate>(Predecessor.m_lChangingPredicates);
+            m_lChangingPredicates = new GenericArraySet<Predicate>(Predecessor.m_lChangingPredicates);
 
 
+            m_lOptionPredicates = sPredecessor.m_lOptionPredicates;
             m_lFixedAndKnown = Predecessor.m_lFixedAndKnown;
             m_lFixedAndHidden = Predecessor.m_lFixedAndHidden;
 
@@ -77,6 +85,7 @@ namespace CPORLib.PlanningModel
                 FunctionValues[p.Key] = p.Value;
             Time = sPredecessor.Time + 1;
             MaintainNegations = sPredecessor.MaintainNegations;
+            MaintainProbabilisticChoices = sPredecessor.MaintainProbabilisticChoices;
             m_dSuccssessors = new Dictionary<string, State>();
         }
 
@@ -131,22 +140,29 @@ namespace CPORLib.PlanningModel
             if (!MaintainNegations && p.Negation)
                 return;
             //m_lPredicates.Add(p);
-            if (Problem.Domain.AlwaysConstant(p))
+
+            if (p.Name.Contains(Utilities.OPTION_PREDICATE))
+                m_lOptionPredicates.Add(p);
+            else
             {
-                if(Problem.InitiallyUnknown(p))
+                if (Problem.Domain.AlwaysConstant(p))
                 {
-                    m_lFixedAndHidden.Add(p);
+                    if (Problem.InitiallyUnknown(p))
+                    {
+                        m_lFixedAndHidden.Add(p);
+                    }
+                    else
+                    {
+                        m_lFixedAndKnown.Add(p);
+                    }
+
                 }
                 else
-                {
-                    m_lFixedAndKnown.Add(p);
-                }
-                
+                    m_lChangingPredicates.Add(p);
             }
-            else
-                m_lChangingPredicates.Add(p);
             
         }
+
 
         public override bool Equals(object obj)
         {
@@ -165,6 +181,10 @@ namespace CPORLib.PlanningModel
 
                 foreach (Predicate p in s.m_lFixedAndHidden)
                     if (!m_lFixedAndHidden.Contains(p))
+                        return false;
+
+                foreach (Predicate p in s.m_lOptionPredicates)
+                    if (!m_lOptionPredicates.Contains(p))
                         return false;
 
                 return true;
@@ -218,7 +238,7 @@ namespace CPORLib.PlanningModel
             if (a is ParametrizedAction)
                 return null;
 
-            if (m_dSuccssessors.TryGetValue(a.Name, out State s))
+            if (m_dSuccssessors.TryGetValue(a.Name, out State s)) //need something smarter for probabilistic effects
                 return s;
 
             ISet<Predicate> all = new UnifiedSet<Predicate>(m_lFixedAndKnown, m_lFixedAndHidden, m_lChangingPredicates);
@@ -231,7 +251,13 @@ namespace CPORLib.PlanningModel
 
             State sNew = Clone();
 
-            sNew.GeneratingAction = a;
+            
+            sNew.OriginalGeneratingAction = a;
+            RelevantOptions = new HashSet<Predicate>();
+            Action aTag = a.ApplyObserved(Predicates, false, RelevantOptions);
+            sNew.GeneratingAction = aTag;
+            //a = aTag;
+
             sNew.History = new List<string>(History);
             sNew.History.Add(ToString());
             sNew.History.Add(a.Name);
@@ -271,7 +297,7 @@ namespace CPORLib.PlanningModel
             if (sNew.Predicates.Contains(Utilities.FALSE_PREDICATE))
                 Debug.WriteLine("BUGBUG");
 
-            if(!a.HasConditionalEffects)
+            if(!a.HasConditionalEffects && !a.HasProbabilisticEffects)
             {
                 m_dSuccssessors[a.Name] = sNew;
             }
@@ -362,36 +388,32 @@ namespace CPORLib.PlanningModel
             }
             else if (fEffects is ProbabilisticFormula)
             {
+                HashSet<Predicate> hsEffects = new HashSet<Predicate>();
+
                 ProbabilisticFormula pf = (ProbabilisticFormula)fEffects;
-                double dRand = RandomGenerator.NextDouble();
-                double dInitialRand = dRand;
-                int iOption = 0;
-                while (iOption < pf.Options.Count && dRand > 0)
-                {
-                    dRand -= pf.Probabilities[iOption];
-                    iOption++;
-                }
-                if (dRand < 0.01)
-                {
-                    iOption--;
+                int iOption = pf.Choose(hsEffects);
 
-                    GetApplicableEffects(pf.Options[iOption], lAdd, lDelete);
-                }
-                else //the no-op option was chosen
+                foreach (Predicate p in hsEffects)
                 {
-                    iOption = -1;
-                }
-                GroundedPredicate pChoice = new GroundedPredicate("Choice");
-                pChoice.AddConstant(new Constant("ActionIndex", "a" + Time));
-                pChoice.AddConstant(new Constant("ChoiceIndex", "c" + ChoiceCount + "." + iOption));
-                ChoiceCount++;
-                State s = this;
-                while (s != null)
-                {
-                    s.AddPredicate(pChoice);
-                    s = s.Predecessor;
+                    if (p.Negation)
+                        lDelete.Add(p);
+                    else
+                        lAdd.Add(p);
                 }
 
+                if (MaintainProbabilisticChoices)
+                {
+                    GroundedPredicate pChoice = new GroundedPredicate("Choice");
+                    pChoice.AddConstant(new Constant("ActionIndex", "a" + Time));
+                    pChoice.AddConstant(new Constant("ChoiceIndex", "c" + ChoiceCount + "." + iOption));
+                    ChoiceCount++;
+                    State s = this;
+                    while (s != null)
+                    {
+                        s.AddPredicate(pChoice);
+                        s = s.Predecessor;
+                    }
+                }
 
             }
             else
@@ -543,6 +565,10 @@ namespace CPORLib.PlanningModel
             return Predicates.Contains(p);
         }
 
+        public void ClearOptionPredicates()
+        {
+            m_lOptionPredicates = new GenericArraySet<Predicate>();
+        }
 
         internal void CompleteNegations()
         {

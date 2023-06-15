@@ -12,7 +12,7 @@ namespace CPORLib.Algorithms
     internal class ParticelAverageHAddPolicy : IRolloutPolicy
     {
         public GuyHaddHeuristuc rolloutPolicy { get; set; }
-        public BelifeParticles currentParticle { get; set; }
+        public BeliefParticles currentParticle { get; set; }
 
 
 
@@ -24,13 +24,13 @@ namespace CPORLib.Algorithms
             rolloutPolicy.Init();
         }
 
-        public void UpdateParticle(BelifeParticles bf)
+        public void UpdateParticle(BeliefParticles bf)
         {
             currentParticle = bf;
         }
 
 
-        public double GetParticleAvarageHaddValue(BelifeParticles bf)
+        public double GetParticleAvarageHaddValue(BeliefParticles bf)
         {
             int total_states_count = bf.Size();
             double score_sum = 0;
@@ -51,7 +51,7 @@ namespace CPORLib.Algorithms
             {
                 if (currentParticle.IsApplicable(a))
                 {
-                    BelifeParticles actionBelifeParticle = currentParticle.Apply(a, a.Observe);
+                    BeliefParticles actionBelifeParticle = currentParticle.Apply(a, a.Observe);
                     double postActionParticleAvarageHaddValue = GetParticleAvarageHaddValue(actionBelifeParticle);
                     if(postActionParticleAvarageHaddValue < BestActionScore)
                     {

@@ -11,11 +11,11 @@ using CPORLib.Tools;
 
 namespace CPORLib.Algorithms
 {
-    internal class BelifeParticles
+    public class BeliefParticles
     {
         public Dictionary<State, int> ViewedStates;
 
-        public BelifeParticles()
+        public BeliefParticles()
         {
             this.ViewedStates = new Dictionary<State, int>();
         }
@@ -42,6 +42,7 @@ namespace CPORLib.Algorithms
         /// <param name="s"> State to add to belife particle. </param>
         public void AddState(State s)
         {
+            s.ClearOptionPredicates();
             if (this.ViewedStates.ContainsKey(s))
             {
                 this.ViewedStates[s]++;
@@ -76,10 +77,10 @@ namespace CPORLib.Algorithms
             return null;
         }
 
-        public BelifeParticles Apply(Action a, Formula observationPredicats)
+        public BeliefParticles Apply(Action a, Formula observationPredicats)
         {
             // Init the return value.
-            BelifeParticles NextBelifePatricle = new BelifeParticles();
+            BeliefParticles NextBelifePatricle = new BeliefParticles();
 
 
             // Foreach particle apply the action and update the new belife particle to have the same frequency.
@@ -119,7 +120,7 @@ namespace CPORLib.Algorithms
             return NextBelifePatricle;
         }
 
-        private void UpdateNextParticle(Action a, Formula observationPredicats, BelifeParticles NextBelifePatricle, KeyValuePair<State, int> stateFrequency, int ProbabilityEffectRatioCount)
+        private void UpdateNextParticle(Action a, Formula observationPredicats, BeliefParticles NextBelifePatricle, KeyValuePair<State, int> stateFrequency, int ProbabilityEffectRatioCount)
         {
             State NewState = stateFrequency.Key.Apply(a);
             if (NewState != null)

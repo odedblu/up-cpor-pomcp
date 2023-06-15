@@ -1,17 +1,17 @@
-﻿using CPORLib.Algorithms;
-using CPORLib.LogicalUtilities;
+﻿using CPORLib.LogicalUtilities;
 using CPORLib.Parsing;
 using CPORLib.Tools;
-using Microsoft.SolverFoundation.Services;
 using Microsoft.SolverFoundation.Solvers;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using static CPORLib.Tools.Options;
 using Action = CPORLib.PlanningModel.PlanningAction;
+using SATInterface;
+using SATInterface.Solver;
+using Microsoft.SolverFoundation.Services;
 
 
 namespace CPORLib.PlanningModel
@@ -21,6 +21,7 @@ namespace CPORLib.PlanningModel
         public ISet<Predicate> Observed { get { return m_lObserved; } }
         public List<CompoundFormula> Hidden { get { return m_lHiddenFormulas; } }
         public HashSet<Predicate> Unknown { get; private set; }
+        private Dictionary<Predicate,List<ProbabilisticFormula>> m_dProbabilisticFormulas;
         private List<CompoundFormula> m_lHiddenFormulas;
         private List<CompoundFormula> m_lOriginalHiddenFormulas;
         private Dictionary<GroundedPredicate, List<int>> m_dMapPredicatesToFormulas;
@@ -48,9 +49,15 @@ namespace CPORLib.PlanningModel
 
         public static bool UseEfficientFormulas = false;
 
-        private int m_cNonDetChoices;
+        private static int m_cNonDetChoices = 0;
 
         public Dictionary<string, double> FunctionValues { get; private set; }
+
+
+        static BeliefState()
+        {
+            Console.SetOut(ConsoleTextWriter.Get());
+        }
 
         public BeliefState(Problem p)
         {
@@ -80,7 +87,7 @@ namespace CPORLib.PlanningModel
 
             bsCOUNT++;
             ID = bsCOUNT;
-            m_cNonDetChoices = 0;
+            m_dProbabilisticFormulas = new Dictionary<Predicate, List<ProbabilisticFormula>>();
         }
         public BeliefState(BeliefState sToCopy)
             : this(sToCopy.Problem)
@@ -107,6 +114,7 @@ namespace CPORLib.PlanningModel
                 }
                 m_dMapPredicateToEfficientFormula.Add(newList);
             }
+            m_dMapIndexToPredicate = new List<GroundedPredicate>(sToCopy.m_dMapIndexToPredicate);
             m_lObserved = new HashSet<Predicate>(sToCopy.Observed);
             Unknown = new HashSet<Predicate>(sToCopy.Unknown);
             m_cfCNFHiddenState = sToCopy.m_cfCNFHiddenState;
@@ -116,12 +124,10 @@ namespace CPORLib.PlanningModel
             if (sToCopy.m_lCurrentTags != null)
                 m_lCurrentTags = new List<ISet<Predicate>>(sToCopy.m_lCurrentTags);
 
-
-            
+            m_dProbabilisticFormulas = new Dictionary<Predicate, List<ProbabilisticFormula>>(sToCopy.m_dProbabilisticFormulas);
 
             bsCOUNT++;
             ID = bsCOUNT;
-            m_cNonDetChoices = sToCopy.m_cNonDetChoices;
         }
 
         public bool ConsistentWith(Predicate p, bool bConsiderHiddenState)
@@ -179,7 +185,7 @@ namespace CPORLib.PlanningModel
         public bool ConsistentWith(Formula fOriginal, bool bCheckingActionPreconditions)
         {
 
-            Formula f = fOriginal.Reduce(Observed);
+            Formula f = fOriginal.Reduce(Observed, true);
             if (f.IsFalse(Observed))
                 return false;
             if (f.IsTrue(Observed))
@@ -349,7 +355,7 @@ namespace CPORLib.PlanningModel
                 //return lConsistentAssignments.Count > 0;
             }
 
-            if (MaintainProblematicTag && bCheckingActionPreconditions && bValid)
+            if (!ComputeCompletePlanTree && MaintainProblematicTag && bCheckingActionPreconditions && bValid)
             {
                 //filter the problematic tag
                 ISet<Predicate> lFiltered = new HashSet<Predicate>();
@@ -358,7 +364,7 @@ namespace CPORLib.PlanningModel
                 {
                     HashSet<Predicate> lAssignment = new HashSet<Predicate>();
                     lAssignment.Add(p);
-                    fReduced = fCurrent.Reduce(lAssignment);
+                    fReduced = fCurrent.Reduce(lAssignment, true);
                     if (!fReduced.Equals(fCurrent))
                         lFiltered.Add(p);
                     if (fReduced.IsTrue(null))
@@ -498,15 +504,18 @@ namespace CPORLib.PlanningModel
         }
 
 
-        public HashSet<Predicate> AddReasoningFormula(Formula f, HashSet<int> hsModifiedClauses)
+        public ISet<Predicate> AddReasoningFormula(Formula f, HashSet<int> hsModifiedClauses = null)
         {
             DateTime dtStart = DateTime.Now;
             bool bLearnedNewPredicate = false;
-            HashSet<Predicate> lAllLearnedPredicates = new HashSet<Predicate>();
+            ISet<Predicate> lAllLearnedPredicates = new GenericArraySet<Predicate>();
+            ISet<Predicate> lAllLearnedChoicePredicates = new GenericArraySet<Predicate>();
+
             List<PredicateFormula> lLearnedPredicates = new List<PredicateFormula>();
-            if (f is CompoundFormula)
+            if (f is CompoundFormula cf)
             {
-                CompoundFormula cf = (CompoundFormula)f.ToCNF();
+                if(ForceCNFBelief)
+                    cf = (CompoundFormula)cf.ToCNF();
                 List<CompoundFormula> lFormulas = new List<CompoundFormula>();
                 if (cf.Operator == "and")
                 {
@@ -553,6 +562,8 @@ namespace CPORLib.PlanningModel
                     if (AddObserved(pf.Predicate))
                     {
                         lAllLearnedPredicates.Add(pf.Predicate);
+                        if (pf.Predicate.Name.Contains(Utilities.OPTION_PREDICATE))
+                            lAllLearnedChoicePredicates.Add(pf.Predicate);
                         cLearned++;
                     }
                     lKnown.Add(pf.Predicate);
@@ -576,11 +587,13 @@ namespace CPORLib.PlanningModel
 
                     if (cfPrevious != null)
                     {
-                        hsModifiedClauses.Add(idx);
+
+                        if (hsModifiedClauses != null)
+                            hsModifiedClauses.Add(idx);
                         cValidIndexes++;
 
                         DateTime dt3 = DateTime.Now;
-                        Formula fNew = cfPrevious.Reduce(lKnown);
+                        Formula fNew = cfPrevious.Reduce(lKnown, true);
                         cReductions++;
 
 
@@ -614,7 +627,15 @@ namespace CPORLib.PlanningModel
                 dt1 = dt2;
 
             }
-
+            if (lAllLearnedChoicePredicates.Count > 0)
+            {
+                //this may be more difficult - we may need to reduce the formulas
+                foreach(Predicate p in lAllLearnedChoicePredicates)
+                {
+                    if (m_dProbabilisticFormulas.ContainsKey(p))
+                        m_dProbabilisticFormulas.Remove(p);
+                }
+            }
 
 
 
@@ -782,6 +803,22 @@ namespace CPORLib.PlanningModel
 
             //BUGBUG: need to implement returning all learned predicates
             return null;
+        }
+
+        public void AddInitialStateFormula(ProbabilisticFormula pf)
+        {
+            ISet<Predicate> lPredicates = pf.GetAllPredicates();
+            foreach(Predicate p in lPredicates)
+            {
+                if (!m_dProbabilisticFormulas.ContainsKey(p))
+                    m_dProbabilisticFormulas[p] = new List<ProbabilisticFormula>();
+                m_dProbabilisticFormulas[p].Add(pf);
+
+                CompoundFormula cfOr = new CompoundFormula("or");
+                cfOr.AddOperand(p);
+                cfOr.SimpleAddOperand(p.Negate());
+                m_lHiddenFormulas.Add(cfOr);
+            }
         }
 
         public void AddInitialStateFormula(CompoundFormula cf)
@@ -967,10 +1004,11 @@ namespace CPORLib.PlanningModel
             Debug.Write("Choosing hidden variables ");
             while (lAssignment == null)
             {
-                Debug.Write(".");
                 lAssignment = ChooseHiddenPredicates(m_lHiddenFormulas, true, bRandomAssignment);
             }
-            Debug.WriteLine("");
+            
+
+
             foreach (Predicate p in lAssignment)
             {
                 s.AddPredicate(p);
@@ -985,6 +1023,8 @@ namespace CPORLib.PlanningModel
                 UnderlyingEnvironmentState = s;
             return s;
         }
+
+        
 
         public State ChooseState(bool bRemoveNegativePredicates, bool bChooseDeadend, bool bRandomAssignment)
         {
@@ -1017,7 +1057,7 @@ namespace CPORLib.PlanningModel
 
                             foreach (Formula f in Problem.DeadEndList)
                             {
-                                Formula fReduced = f.Reduce(Observed);
+                                Formula fReduced = f.Reduce(Observed, true);
                                 if (fReduced is CompoundFormula)
                                     lHidden.Add((CompoundFormula)fReduced.Negate());
                                 else
@@ -1069,11 +1109,12 @@ namespace CPORLib.PlanningModel
         {
             List<CompoundFormula> lReduced = new List<CompoundFormula>();
             bool bAssignmentChanged = false;
+            
             foreach (CompoundFormula cf in lHidden)
             {
                 if (cf != null)
                 {
-                    Formula fReduced = cf.Reduce(lAssignment);
+                    Formula fReduced = cf.Reduce(lAssignment, true);
                     if (fReduced.IsFalse(lAssignment))
                         return null;
                     if (fReduced is PredicateFormula)
@@ -1314,20 +1355,40 @@ namespace CPORLib.PlanningModel
         {
             ISet<Predicate> lToAssign = GetHiddenPredicates(lHidden, bRandomAssignment);
 
-            HashSet<Predicate> lInitialAssignment = new HashSet<Predicate>();
+            ISet<Predicate> lInitialAssignment = new GenericArraySet<Predicate>();
             if (false && bCheatUsingAt)
                 CheatUsingAtPredicate(lToAssign, lInitialAssignment);
-
+            /*
+            if (m_lProbabilisticFormulas.Count > 0)
+            {
+                foreach (ProbabilisticFormula pf in m_lProbabilisticFormulas)
+                {
+                    if (pf != null)
+                    {
+                        ProbabilisticFormula pfReduced = (ProbabilisticFormula)pf.Reduce(lInitialAssignment, true);
+                        if (pfReduced != null)
+                        {
+                            pfReduced.Choose(lInitialAssignment);
+                            List<CompoundFormula> lNewHidden = Reduce(lHidden, lInitialAssignment, lToAssign);
+                            if (lNewHidden == null)
+                                Console.WriteLine("*");
+                            lHidden = lNewHidden;
+                        }
+                    }
+                }
+            }
+            */
+            List<CompoundFormula> lWithoutProbabilistic = lHidden;
             //ApplySimpleOneOfs(lOneOfs, lInitialAssignment, lCanonicalPredicates);
 
             ISet<Predicate> lAssignment = null;
             if (lCurrentAssignments == null)
-                lAssignment = ChooseHiddenPredicates(lHidden, lInitialAssignment, lToAssign, bRandomAssignment);
+                lAssignment = ChooseHiddenPredicates(lWithoutProbabilistic, lInitialAssignment, lToAssign, bRandomAssignment);
             else
             {
-                lAssignment = SimpleChooseHiddenPredicates(new List<Formula>(lHidden), new HashSet<Predicate>(lInitialAssignment), lToAssign, lCurrentAssignments, false);
+                lAssignment = SimpleChooseHiddenPredicates(new List<Formula>(lWithoutProbabilistic), new HashSet<Predicate>(lInitialAssignment), lToAssign, lCurrentAssignments, false);
                 if (lAssignment == null)
-                    lAssignment = ChooseHiddenPredicates(lHidden, lInitialAssignment, lToAssign, lCurrentAssignments);
+                    lAssignment = ChooseHiddenPredicates(lWithoutProbabilistic, lInitialAssignment, lToAssign, lCurrentAssignments);
             }
 
             return lAssignment;
@@ -1542,6 +1603,28 @@ namespace CPORLib.PlanningModel
             lFullAssignment = ChooseHiddenPredicates(lReduced, lNewAssignment, lNewHidden, lCurrentAssignments);
             return lFullAssignment;
         }
+
+        private Predicate ChooseInitValue(Predicate p)
+        {
+            if (!m_dProbabilisticFormulas.ContainsKey(p))
+            {
+                if (RandomGenerator.NextDouble() < 0.5)
+                    return p;
+                else
+                    return p.Negate();
+            }
+            else
+            {
+                ProbabilisticFormula pf = m_dProbabilisticFormulas[p].First();//for now assuming single formula per predicate
+                ISet<Predicate> lAssignment = new HashSet<Predicate>();
+                pf.Choose(lAssignment);
+                if (lAssignment.Contains(p))
+                    return p;
+                else
+                    return p.Negate();
+            }
+        }
+
         //random
         private ISet<Predicate> ChooseHiddenPredicates(List<CompoundFormula> lHidden, ISet<Predicate> lAssignment, ISet<Predicate> lUnknown, bool bRandomAssignment)
         {
@@ -1552,9 +1635,10 @@ namespace CPORLib.PlanningModel
             ISet<Predicate> lFullAssignment = null;
             Predicate pCurrent = lUnknown.First();
             lUnknown.Remove(pCurrent);
-            if (bRandomAssignment  || !Options.ComputeCompletePlanTree)
-                if (RandomGenerator.NextDouble() < 0.5)
-                    pCurrent = pCurrent.Negate();
+            if (bRandomAssignment || !Options.ComputeCompletePlanTree)
+            {
+                pCurrent = ChooseInitValue(pCurrent);
+            }
             ISet<Predicate> lNewHidden = new HashSet<Predicate>(lUnknown);
             ISet<Predicate> lNewAssignment = new HashSet<Predicate>(lAssignment);
             List<CompoundFormula> lReduced = AddAssignment(lHidden, lNewAssignment, lNewHidden, pCurrent);
@@ -2183,7 +2267,7 @@ namespace CPORLib.PlanningModel
 
             foreach (Formula f in lMaybeDeadends)
             {
-                Formula fReduced = f.Reduce(Observed);
+                Formula fReduced = f.Reduce(Observed, true);
                 if (fReduced is CompoundFormula)
                 {
                     CompoundFormula cf = (CompoundFormula)fReduced;
@@ -2530,13 +2614,24 @@ namespace CPORLib.PlanningModel
         public ISet<Predicate> RunSatSolver()
         {
             List<Formula> lFormulas = new List<Formula>(m_lHiddenFormulas);
-            List<ISet<Predicate>> l = RunSatSolver(lFormulas, 1, null);
+            List<ISet<Predicate>> l = RunSatSolverCNF(lFormulas, 1, null);
             return l[0];
         }
 
         public List<ISet<Predicate>> RunSatSolver(List<Formula> lFormulas, int cAttempts)
         {
-            return RunSatSolver(lFormulas, cAttempts, null);
+            if (Options.SatSolverType == SatSolverTypes.SolverFoundation)
+            {
+                if (ForceCNFBelief)
+                    return RunSatSolverCNF(lFormulas, cAttempts, null);
+                else
+                    return RunSatSolverNonCNF(lFormulas, cAttempts, null); ;
+            }
+            if(Options.SatSolverType == SatSolverTypes.Deiruch)
+            {
+                return RunSatSolverDeiruch(lFormulas);
+            }
+            return null;
         }
 
         private string m_sFFOutput;
@@ -2606,7 +2701,7 @@ namespace CPORLib.PlanningModel
                         cValidIndexes++;
 
                         DateTime dt3 = DateTime.Now;
-                        Formula fNew = cfPrevious.Reduce(lKnown);
+                        Formula fNew = cfPrevious.Reduce(lKnown, true);
                         cReductions++;
                         ts2 += DateTime.Now - dt3;
 
@@ -2659,7 +2754,7 @@ namespace CPORLib.PlanningModel
             return true;
         }
 
-        public List<ISet<Predicate>> RunSatSolver(List<Formula> lFormulas, int cAttempts, ISet<Predicate> lProblematicTag)
+        public List<ISet<Predicate>> RunSatSolverCNF(List<Formula> lFormulas, int cAttempts, ISet<Predicate> lProblematicTag)
         {
             HashSet<Predicate> lPartialAssignment = new HashSet<Predicate>();
 
@@ -2764,6 +2859,252 @@ namespace CPORLib.PlanningModel
         }
 
 
+        public List<ISet<Predicate>> RunSatSolverDeiruch(List<Formula> lFormulas)
+        {
+            HashSet<Predicate> lPartialAssignment = new HashSet<Predicate>();
+
+
+            if (!ApplyUnitPropogation(lFormulas, lPartialAssignment))
+                return new List<ISet<Predicate>>();
+            bool bAllNull = true;
+
+
+            DateTime dtStart = DateTime.Now;
+            List<ISet<Predicate>> lAssignments = new List<ISet<Predicate>>();
+
+            foreach (Formula f in lFormulas)
+                if (f != null)
+                    bAllNull = false;
+            if (bAllNull)//solved by unit propogation
+            {
+                lAssignments.Add(new HashSet<Predicate>(lPartialAssignment));
+                return lAssignments;
+            }
+
+
+            /*
+            ISet<Predicate> lAssignment = lProblematicTag;
+
+            if (lAssignment != null)
+            {
+                CompoundFormula cfOr = new CompoundFormula("or");
+                foreach (Predicate pAssigned in lAssignment)
+                    cfOr.AddOperand(pAssigned.Negate());
+                lFormulas.Add(cfOr);
+            }
+            */
+
+
+            SATInterface.Model model = new SATInterface.Model(new Configuration());
+            model.Configuration.Verbosity = 0;
+            
+            
+            Dictionary<Predicate, BoolExpr> dVariables = new Dictionary<Predicate, BoolExpr>();
+            
+
+            foreach (Formula f in lFormulas)
+            {
+                if (f != null)
+                {
+                    BoolExpr t = ToExpr(f, dVariables, model);
+                    model.AddConstr(t);
+                }
+            }
+
+            model.Solve();
+
+
+            if (model.State == SATInterface.State.Satisfiable)
+            {
+                ISet<Predicate> lSolution = new HashSet<Predicate>();
+
+                foreach (KeyValuePair<Predicate, BoolExpr> p in dVariables)
+                {
+                    bool bValue = p.Value.X;
+                    if (bValue)
+                        lSolution.Add(p.Key.Negate());
+                    else
+                        lSolution.Add(p.Key);
+                }
+
+
+
+                lAssignments.Add(lSolution);
+            }
+
+
+            tsTotalRunSatSolver += DateTime.Now - dtStart;
+            cRuns++;
+
+
+            return lAssignments;
+            
+        }
+
+
+
+        public List<ISet<Predicate>> RunSatSolverNonCNF(List<Formula> lFormulas, int cAttempts, ISet<Predicate> lProblematicTag)
+        {
+            HashSet<Predicate> lPartialAssignment = new HashSet<Predicate>();
+
+
+            if (!ApplyUnitPropogation(lFormulas, lPartialAssignment))
+                return new List<ISet<Predicate>>();
+            bool bAllNull = true;
+
+
+            DateTime dtStart = DateTime.Now;
+            List<ISet<Predicate>> lAssignments = new List<ISet<Predicate>>();
+
+            foreach (Formula f in lFormulas)
+                if (f != null)
+                    bAllNull = false;
+            if (bAllNull)//solved by unit propogation
+            {
+                lAssignments.Add(new HashSet<Predicate>(lPartialAssignment));
+                return lAssignments;
+            }
+
+
+
+            ISet<Predicate> lAssignment = lProblematicTag;
+
+            if (lAssignment != null)
+            {
+                CompoundFormula cfOr = new CompoundFormula("or");
+                foreach (Predicate pAssigned in lAssignment)
+                    cfOr.AddOperand(pAssigned.Negate());
+                lFormulas.Add(cfOr);
+            }
+
+
+            ConstraintSystem solver = ConstraintSystem.CreateSolver();
+            Dictionary<Predicate, CspTerm> dCspVariables = new Dictionary<Predicate, CspTerm>();
+            foreach(Formula f in lFormulas)
+            {
+                if (f != null)
+                {
+                    CspTerm t = ToTerm(f, dCspVariables, solver);
+                    solver.AddConstraints(t);
+                }
+            }
+            ConstraintSolverSolution solution = solver.Solve();
+            if (solution.HasFoundSolution)
+            {
+                ISet<Predicate> lSolution = new HashSet<Predicate>();
+
+                foreach (KeyValuePair<Predicate, CspTerm> p in dCspVariables)
+                {
+                    int value = (int)solution[p.Value];
+                    if (value == 0)
+                        lSolution.Add(p.Key.Negate());
+                    else
+                        lSolution.Add(p.Key);
+                }
+
+
+
+                lAssignments.Add(lSolution);
+            }
+
+
+            tsTotalRunSatSolver += DateTime.Now - dtStart;
+            cRuns++;
+
+
+            return lAssignments;
+        }
+
+
+        private BoolExpr ToExpr(Formula f, Dictionary<Predicate, BoolExpr> dVariables, SATInterface.Model model)
+        {
+            if (f is PredicateFormula pf)
+            {
+                Predicate p = pf.Predicate;
+                if (!dVariables.ContainsKey(p.Canonical()))
+                {
+                    int idx = dVariables.Count;
+                    dVariables[p.Canonical()] = model.AddVar();
+                }
+                BoolExpr tVar = dVariables[p.Canonical()];
+                if (p.Negation)
+                {
+                    return !tVar;
+                }
+                else
+                {
+                    return tVar;
+                }
+            }
+            if (f is CompoundFormula cf)
+            {
+                BoolExpr tResult = null;
+                List<BoolExpr> lTerms = new List<BoolExpr>();
+                foreach (Formula fSub in cf.Operands)
+                    lTerms.Add(ToExpr(fSub, dVariables, model));
+                BoolExpr[] aTerms = lTerms.ToArray();
+                if (cf.Operator == "and")
+                {
+                    tResult = model.And(aTerms);
+                }
+                else if (cf.Operator == "or")
+                {
+
+                    tResult = model.Or(aTerms);
+                }
+                else if (cf.Operator == "oneof")
+                {
+                    tResult = model.ExactlyOneOf(aTerms);
+                }
+                return tResult;
+            }
+            return null;
+        }
+
+        private CspTerm ToTerm(Formula f, Dictionary<Predicate, CspTerm> dCspVariables, ConstraintSystem solver)
+        {
+            if(f is PredicateFormula pf)
+            {
+                Predicate p = pf.Predicate;
+                if(!dCspVariables.ContainsKey(p.Canonical()))
+                {
+                    int idx = dCspVariables.Count;
+                    dCspVariables[p.Canonical()] = solver.CreateBoolean("v" + idx);
+                }
+                CspTerm tVar = dCspVariables[p.Canonical()];
+                if(p.Negation)
+                {
+                    return solver.Not(tVar);
+                }
+                else
+                {
+                    return tVar;
+                }
+            }
+            if (f is CompoundFormula cf)
+            {
+                CspTerm tResult = null;
+                List<CspTerm> lTerms = new List<CspTerm>();
+                foreach (Formula fSub in cf.Operands)
+                    lTerms.Add(ToTerm(fSub, dCspVariables, solver));
+                if (cf.Operator == "and")
+                {
+
+                    tResult = solver.And(lTerms.ToArray());
+                }
+                else if (cf.Operator == "or")
+                {
+
+                    tResult = solver.Or(lTerms.ToArray());
+                }
+                else if (cf.Operator == "oneof")
+                {
+                    tResult = solver.ExactlyMofN(1, lTerms.ToArray());
+                }
+                return tResult;
+            }
+            return null;
+        }
 
         private List<List<int>> GetCNFClauses(List<Formula> lFormulas)
         {
@@ -3064,7 +3405,7 @@ namespace CPORLib.PlanningModel
 
             ISet<Predicate> lKnown = new HashSet<Predicate>(Observed);
             lKnown.Add(p);
-            Formula fReduced = m_cfCNFHiddenState.Reduce(lKnown);
+            Formula fReduced = m_cfCNFHiddenState.Reduce(lKnown, true);
             if (fReduced.IsFalse(lKnown))
                 return false;
             return true;
@@ -3152,15 +3493,15 @@ namespace CPORLib.PlanningModel
             if (lCurrentFormulas.Count == 0)
                 return hsModifiedClauses;
             if (lCurrentFormulas.Count == 1)
-                fFinal = lCurrentFormulas[0].Reduce(Observed);
+                fFinal = lCurrentFormulas[0].Reduce(Observed, true);
             else
             {
                 CompoundFormula cf = new CompoundFormula("and");
                 foreach (Formula f in lCurrentFormulas)
                 {
-                    Formula fReduced = f.Reduce(Observed).Simplify();
+                    Formula fReduced = f.Reduce(Observed, true).Simplify();
                     Formula fCNF = null;
-                    if (fReduced is CompoundFormula)
+                    if (ForceCNFBelief && fReduced is CompoundFormula)
                         fCNF = ((CompoundFormula)fReduced).ToCNF();
                     else
                         fCNF = fReduced;
@@ -3169,6 +3510,8 @@ namespace CPORLib.PlanningModel
                 fFinal = cf;
 
             }
+
+
             //Debug.WriteLine("Total time in regressobs " + ts1.TotalSeconds + " propogate " + ts2.TotalSeconds +
             //     " all " + (DateTime.Now - dtStart).TotalSeconds + " size " + fFinal.Size);
 
@@ -3179,7 +3522,7 @@ namespace CPORLib.PlanningModel
             DateTime dtAfterReasoning = DateTime.Now;
             //Seems likely but I am unsure: if there was no real regression, then learned things can be applied to all states as is
 
-            HashSet<Predicate> lLearned = null;
+            ISet<Predicate> lLearned = null;
             if (BeliefState.UseEfficientFormulas)
                 lLearned = AddReasoningFormulaEfficient(fFinal);
             else
@@ -3187,6 +3530,7 @@ namespace CPORLib.PlanningModel
 
             if (lLearned.Count > 0)
             {
+
                 //HashSet<Predicate> lLearned = pssCurrent.ApplyReasoning(); not needed since we got the learned predicates from the belief update
                 if (!Options.ComputeCompletePlanTree)
                     pssCurrent.AddObserved(lLearned);

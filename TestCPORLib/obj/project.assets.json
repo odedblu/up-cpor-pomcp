@@ -2,6 +2,45 @@
   "version": 3,
   "targets": {
     "net6.0": {
+      "deiruch.SATInterface/4.9.0": {
+        "type": "package",
+        "compile": {
+          "lib/net6.0/SATInterface.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net6.0/SATInterface.dll": {
+            "related": ".xml"
+          }
+        },
+        "contentFiles": {
+          "contentFiles/any/net6.0/CaDiCaL.dll": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "CaDiCaL.dll"
+          },
+          "contentFiles/any/net6.0/YalSAT.dll": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "YalSAT.dll"
+          },
+          "contentFiles/any/net6.0/cryptominisat5win.dll": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "cryptominisat5win.dll"
+          },
+          "contentFiles/any/net6.0/kissat.dll": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": true,
+            "outputPath": "kissat.dll"
+          }
+        }
+      },
       "Microsoft.CSharp/4.7.0": {
         "type": "package",
         "compile": {
@@ -187,9 +226,10 @@
       },
       "CPORLib/1.0.0": {
         "type": "project",
-        "framework": ".NETStandard,Version=v2.0",
+        "framework": ".NETCoreApp,Version=v6.0",
         "dependencies": {
           "Microsoft.Solver.Foundation": "3.1.0",
+          "deiruch.SATInterface": "4.9.0",
           "pythonnet": "3.0.1"
         },
         "compile": {
@@ -202,6 +242,27 @@
     }
   },
   "libraries": {
+    "deiruch.SATInterface/4.9.0": {
+      "sha512": "lFY0HjAO9SQW7/f+ITrxRB9h0AHf1DUfVTo8GYzlF1IWut9/nsI2xgDQwljnvDcxC3+ut4lJcVhiVmSJIMu0Hg==",
+      "type": "package",
+      "path": "deiruch.satinterface/4.9.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "content/CaDiCaL.dll",
+        "content/YalSAT.dll",
+        "content/cryptominisat5win.dll",
+        "content/kissat.dll",
+        "contentFiles/any/net6.0/CaDiCaL.dll",
+        "contentFiles/any/net6.0/YalSAT.dll",
+        "contentFiles/any/net6.0/cryptominisat5win.dll",
+        "contentFiles/any/net6.0/kissat.dll",
+        "deiruch.satinterface.4.9.0.nupkg.sha512",
+        "deiruch.satinterface.nuspec",
+        "lib/net6.0/SATInterface.dll",
+        "lib/net6.0/SATInterface.xml"
+      ]
+    },
     "Microsoft.CSharp/4.7.0": {
       "sha512": "pTj+D3uJWyN3My70i2Hqo+OXixq3Os2D1nJ2x92FFo6sk8fYS1m1WLNTs0Dc1uPaViH0YvEEwvzddQ7y4rhXmA==",
       "type": "package",
@@ -997,6 +1058,7 @@
     "net6.0": [
       "CPORLib >= 1.0.0",
       "NETStandard.Library >= 2.0.3",
+      "deiruch.SATInterface >= 4.9.0",
       "pythonnet >= 3.0.1"
     ]
   },
@@ -1046,6 +1108,10 @@
           "NETStandard.Library": {
             "target": "Package",
             "version": "[2.0.3, )"
+          },
+          "deiruch.SATInterface": {
+            "target": "Package",
+            "version": "[4.9.0, )"
           },
           "pythonnet": {
             "target": "Package",

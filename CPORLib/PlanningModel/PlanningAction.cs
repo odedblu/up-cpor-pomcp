@@ -28,6 +28,8 @@ namespace CPORLib.PlanningModel
         private ISet<Predicate> m_sCachedEffects;
 
         public bool HasConditionalEffects { get; protected set; }
+        public bool HasProbabilisticEffects { get; protected set; }
+
 
         private PlanningAction m_aOriginal;
         public PlanningAction Original
@@ -38,7 +40,7 @@ namespace CPORLib.PlanningModel
             }
             private set
             {
-                
+
                 m_aOriginal = value;
             }
         }
@@ -71,7 +73,7 @@ namespace CPORLib.PlanningModel
             //BUGBUG: sometimes we get in the effects (and p (not p)) (woodworking). In that case the formula will contain P_FALSE. Assuming for now that if this is the case, then nothing changes.
             //BUGBUG: for now implementing in a very shallow way
 
-            if(f == null)
+            if (f == null)
             {
                 Effects = null;
                 return;
@@ -114,6 +116,7 @@ namespace CPORLib.PlanningModel
             Effects = fRemovePFalse;
             ContainsNonDeterministicEffect = Effects.ContainsNonDeterministicEffect();
             HasConditionalEffects = Effects.ContainsCondition();
+            HasProbabilisticEffects = Effects.ContainsProbabilisticEffects();
         }
 
         private void SplitEffects(List<CompoundFormula> lConditions, List<Formula> lObligatory)
@@ -325,9 +328,9 @@ namespace CPORLib.PlanningModel
 
         private void AddPredicatesToEffectList(ISet<Predicate> lEffects, Formula f)
         {
-            if (f is PredicateFormula)
+            if (f is PredicateFormula pf)
             {
-                Predicate p = ((PredicateFormula)f).Predicate;
+                Predicate p = pf.Predicate;
                 if (!lEffects.Contains(p))
                 {
                     if (lEffects.Contains(p.Negate()))
@@ -344,9 +347,8 @@ namespace CPORLib.PlanningModel
                     }
                 }
             }
-            else
+            else if (f is CompoundFormula cf)
             {
-                CompoundFormula cf = (CompoundFormula)f;
 
                 //non deterministic effects
                 if (cf.Operator == "oneof" || cf.Operator == "or")
@@ -374,6 +376,14 @@ namespace CPORLib.PlanningModel
                 else
                     throw new NotImplementedException();
             }
+            else if (f is ProbabilisticFormula probf) //adding all possible effects for heuristic computation
+            {
+                foreach (Formula fSub in probf.Options)
+                {
+                    AddPredicatesToEffectList(lEffects, fSub);
+                }
+            }
+
         }
 
         private void AddPredicatesToEffectList(HashSet<Predicate> lAddEffects, HashSet<Predicate> lRemoveEffects, Formula f)
@@ -535,7 +545,7 @@ namespace CPORLib.PlanningModel
         public PlanningAction NonConditionalObservationTranslation(Dictionary<string, ISet<Predicate>> dTags, List<string> lAlwaysKnown, bool bTrue)
         {
             PlanningAction aNew = Clone();
-            
+
             if (bTrue)
                 aNew.Name += "-T";
             else
@@ -571,7 +581,7 @@ namespace CPORLib.PlanningModel
 
             aNew.Preconditions = cfPreconditions;
 
-            if(bTrue)
+            if (bTrue)
                 aNew.Effects = new PredicateFormula(pKObserve);
             else
                 aNew.Effects = new PredicateFormula(pKNObserve);
@@ -634,6 +644,84 @@ namespace CPORLib.PlanningModel
             }
             return aNew;
         }
+
+
+        public PlanningAction RemoveProbabilisticEffects(BeliefState bsInitialBelief)
+        {
+            if (Effects == null || !Effects.ContainsProbabilisticEffects())
+                return this;
+            PlanningAction aNew = Clone();
+            if (Original == null)
+                aNew.Original = this;
+            List<Formula> lOptions = new List<Formula>();
+            Effects.GetProbabilisticOptions(lOptions); // need to consider conditional probabilistic
+            HashSet<Predicate> hsNonDetPredicates = new HashSet<Predicate>();
+            foreach (Formula cf in lOptions)
+                cf.GetAllPredicates(hsNonDetPredicates);
+            CompoundFormula cfEffects = (CompoundFormula)Effects;
+            CompoundFormula cfAnd = new CompoundFormula("and");
+            foreach (Formula f in cfEffects.Operands)
+            {
+                if (!f.ContainsProbabilisticEffects())
+                    cfAnd.AddOperand(f);
+            }
+
+
+            foreach (Formula f in lOptions)
+            {
+                ProbabilisticFormula cfOption = null;
+                if (f is ProbabilisticFormula)
+                    cfOption = (ProbabilisticFormula)f;
+
+                CompoundFormula cfCondition = null;
+                if (f is CompoundFormula cf)
+                {
+                    if (cf.Operator != "when")
+                        throw new NotImplementedException();
+                    if (cf.Operands[1] is ProbabilisticFormula)
+                        cfOption = (ProbabilisticFormula)(cf.Operands[1]);
+                    else
+                        throw new NotImplementedException();
+                    cfCondition = cf;
+                }
+
+
+                ProbabilisticFormula cfChoice = new ProbabilisticFormula();
+                for (int i = 0; i < cfOption.Options.Count; i++)
+                {
+                    GroundedPredicate gpChoice = new GroundedPredicate(Name + "_" + Utilities.OPTION_PREDICATE + "_" + bsInitialBelief.NextNonDetChoice());
+                    //bsInitialBelief.Problem.Domain.Predicates.Add(gpChoice);
+                    cfChoice.AddOption(new PredicateFormula(gpChoice), cfOption.Probabilities[i]);
+
+                    bsInitialBelief.AddInitialStateFormula(cfChoice);
+
+                    CompoundFormula cfWhenTrue = new CompoundFormula("when");
+                    if (cfCondition != null)
+                    {
+                        CompoundFormula cfCond = new CompoundFormula("and");
+                        cfCond.AddOperand(gpChoice);
+                        cfCond.AddOperand(cfCondition.Operands[0]);
+                        cfWhenTrue.AddOperand(cfCond);
+                    }
+                    else
+                    {
+                        cfWhenTrue.AddOperand(gpChoice);
+                    }
+                    cfWhenTrue.AddOperand(cfOption.Options[i]);
+                    cfAnd.AddOperand(cfWhenTrue);
+
+
+                }
+
+                aNew.Effects = cfAnd;
+                foreach (Predicate p in hsNonDetPredicates)
+                    aNew.NonDeterministicEffects.Add(p);
+            }
+            return aNew;
+        } 
+
+
+
 
         public List<PlanningAction> KnowWhetherTagObservationTranslation(Dictionary<string, ISet<Predicate>> dTags, Domain d)
         {
@@ -3596,7 +3684,7 @@ namespace CPORLib.PlanningModel
             return null;
         }
 
-        public PlanningAction ApplyObserved(ISet<Predicate> lKnown)
+        public PlanningAction ApplyObserved(ISet<Predicate> lKnown, bool bContainsNegations, ISet<Predicate> lRelevantOptions)
         {
             if (Effects == null)
                 return this;
@@ -3605,7 +3693,7 @@ namespace CPORLib.PlanningModel
                 aTag.Original = this;
             if (aTag.Effects != null)
             {
-                aTag.Effects = Effects.ReduceConditions(lKnown);
+                aTag.Effects = Effects.ReduceConditions(lKnown, bContainsNegations, lRelevantOptions);
                 if (aTag.Effects != null)
                     aTag.HasConditionalEffects = aTag.Effects.ContainsCondition();
             }
@@ -3620,7 +3708,7 @@ namespace CPORLib.PlanningModel
 
                 aTag.m_mRegressions = new Dictionary<Predicate, Formula>();
                 foreach (Predicate p in m_mRegressions.Keys)
-                    aTag.m_mRegressions[p] = m_mRegressions[p].Reduce(lKnown);
+                    aTag.m_mRegressions[p] = m_mRegressions[p].Reduce(lKnown, bContainsNegations);
 
             }
             return aTag;

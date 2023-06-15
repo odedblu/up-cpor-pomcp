@@ -12,4 +12,46 @@
   <ItemGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
     <SourceRoot Include="C:\Users\shanigu\.nuget\packages\" />
   </ItemGroup>
+  <ItemGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
+    <None Include="$(NuGetPackageRoot)deiruch.satinterface\4.9.0\contentFiles\any\net6.0\CaDiCaL.dll" Condition="Exists('$(NuGetPackageRoot)deiruch.satinterface\4.9.0\contentFiles\any\net6.0\CaDiCaL.dll')">
+      <NuGetPackageId>deiruch.SATInterface</NuGetPackageId>
+      <NuGetPackageVersion>4.9.0</NuGetPackageVersion>
+      <NuGetItemType>None</NuGetItemType>
+      <Pack>false</Pack>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>CaDiCaL.dll</TargetPath>
+      <Private>True</Private>
+      <Link>CaDiCaL.dll</Link>
+    </None>
+    <None Include="$(NuGetPackageRoot)deiruch.satinterface\4.9.0\contentFiles\any\net6.0\YalSAT.dll" Condition="Exists('$(NuGetPackageRoot)deiruch.satinterface\4.9.0\contentFiles\any\net6.0\YalSAT.dll')">
+      <NuGetPackageId>deiruch.SATInterface</NuGetPackageId>
+      <NuGetPackageVersion>4.9.0</NuGetPackageVersion>
+      <NuGetItemType>None</NuGetItemType>
+      <Pack>false</Pack>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>YalSAT.dll</TargetPath>
+      <Private>True</Private>
+      <Link>YalSAT.dll</Link>
+    </None>
+    <None Include="$(NuGetPackageRoot)deiruch.satinterface\4.9.0\contentFiles\any\net6.0\cryptominisat5win.dll" Condition="Exists('$(NuGetPackageRoot)deiruch.satinterface\4.9.0\contentFiles\any\net6.0\cryptominisat5win.dll')">
+      <NuGetPackageId>deiruch.SATInterface</NuGetPackageId>
+      <NuGetPackageVersion>4.9.0</NuGetPackageVersion>
+      <NuGetItemType>None</NuGetItemType>
+      <Pack>false</Pack>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>cryptominisat5win.dll</TargetPath>
+      <Private>True</Private>
+      <Link>cryptominisat5win.dll</Link>
+    </None>
+    <None Include="$(NuGetPackageRoot)deiruch.satinterface\4.9.0\contentFiles\any\net6.0\kissat.dll" Condition="Exists('$(NuGetPackageRoot)deiruch.satinterface\4.9.0\contentFiles\any\net6.0\kissat.dll')">
+      <NuGetPackageId>deiruch.SATInterface</NuGetPackageId>
+      <NuGetPackageVersion>4.9.0</NuGetPackageVersion>
+      <NuGetItemType>None</NuGetItemType>
+      <Pack>false</Pack>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>kissat.dll</TargetPath>
+      <Private>True</Private>
+      <Link>kissat.dll</Link>
+    </None>
+  </ItemGroup>
 </Project>

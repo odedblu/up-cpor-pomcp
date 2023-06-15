@@ -87,6 +87,7 @@ namespace CPORLib.Algorithms
                 for (int i = 0; i < 500; i++)
                 {
                     State s = nCurrent.PartiallySpecifiedState.m_bsInitialBelief.ChooseState(true, true);
+                    bool bValid = true;
                     for(int j =  lActions.Count - 1; j >= 0; j--)
                     {
                         Action a = lActions[j];
@@ -96,12 +97,30 @@ namespace CPORLib.Algorithms
                             Console.Write("*");
                         if(o != null)
                         {
-                            if(!o.IsTrue(sTag.Predicates, false))
+                            if (!o.IsTrue(sTag.Predicates, false))
+                            {  //modify consistency to check the probabilistic formulas
+                               //getting here is not good - it probably means that the regression mechanism failed to identify that some non-det option is invalid
+                               //I was unable to find why the regression of the observations failed, and hence I use a hack:
+                               //I hence set the conjunction of options that were selected for this state as invalid
+
+                                CompoundFormula cfAnd = new CompoundFormula("and");
+                                foreach (Predicate p in sTag.OptionPredicates)
+                                    cfAnd.AddOperand(p);
+
                                 Console.Write("*");
+
+                                nCurrent.PartiallySpecifiedState.m_bsInitialBelief.AddReasoningFormula(cfAnd.Negate());
+                                    
+                                
+
+                                bValid = false;
+                                break;
+                            }
                         }
                         s = sTag;
                     }
-                    nCurrent.ParticleFilter.AddState(s);
+                    if (bValid)
+                        nCurrent.ParticleFilter.AddState(s);
                 }
             }
             
@@ -397,13 +416,13 @@ namespace CPORLib.Algorithms
                 {
                     if (psTrueState != null)
                     {
-                        BelifeParticles PositiveNextParticleFilter = Node.ParticleFilter.Apply(a, a.Observe);
+                        BeliefParticles PositiveNextParticleFilter = Node.ParticleFilter.Apply(a, a.Observe);
                         nAction.AddObservationChild(psTrueState, a.Observe, PositiveNextParticleFilter);
 
                     }
                     if (psFalseState != null)
                     {
-                        BelifeParticles NegativeNextParticleFilter = Node.ParticleFilter.Apply(a, a.Observe.Negate());
+                        BeliefParticles NegativeNextParticleFilter = Node.ParticleFilter.Apply(a, a.Observe.Negate());
                         nAction.AddObservationChild(psFalseState, a.Observe.Negate(), NegativeNextParticleFilter);
                     }
                     Node.AddActionPomcpNode(nAction);
@@ -425,15 +444,15 @@ namespace CPORLib.Algorithms
                 nAction.InexactExpansion = true;
                 if (a.Observe != null)
                 {
-                    BelifeParticles PositiveNextParticleFilter = Node.ParticleFilter.Apply(a, a.Observe);
+                    BeliefParticles PositiveNextParticleFilter = Node.ParticleFilter.Apply(a, a.Observe);
                     nAction.AddObservationChild(null, a.Observe, PositiveNextParticleFilter);
 
-                    BelifeParticles NegativeNextParticleFilter = Node.ParticleFilter.Apply(a, a.Observe.Negate());
+                    BeliefParticles NegativeNextParticleFilter = Node.ParticleFilter.Apply(a, a.Observe.Negate());
                     nAction.AddObservationChild(null, a.Observe.Negate(), NegativeNextParticleFilter);
                 }
                 else
                 {
-                    BelifeParticles NextParticleFilter = Node.ParticleFilter.Apply(a, null);
+                    BeliefParticles NextParticleFilter = Node.ParticleFilter.Apply(a, null);
                     nAction.AddObservationChild(null, null, NextParticleFilter);
                 }
                 Node.AddActionPomcpNode(nAction);
@@ -444,7 +463,7 @@ namespace CPORLib.Algorithms
 
 
 
-        public double MultipleRollouts(BelifeParticles possiboleStates, int currentDepth, int numberOfRepets)
+        public double MultipleRollouts(BeliefParticles possiboleStates, int currentDepth, int numberOfRepets)
         {
             if (possiboleStates.Size() == 0) return Double.NaN;
             double totalScore = 0;
@@ -614,6 +633,8 @@ namespace CPORLib.Algorithms
             //while (!Problem.IsGoalState(CurrentState.UnderlyingEnvironmentState))
             ObservationPomcpNode nCurrent = Root;
 
+            int iStep = 0;
+
             ExpandNode(Root);
             while (!CurrentState.IsGoalState())
             {
@@ -639,7 +660,7 @@ namespace CPORLib.Algorithms
                 //BUGBUG;//problem - sometimes checking is the only child although there should be more children.
                 if (bestValidAction.Name == "checking" && Plan.Count > 0 && !Plan.Last().Name.StartsWith("move"))
                 {
-                    PrintTree(nCurrent, "", 0);
+                    PrintTree(nCurrent, "", 0); 
                     //Search(nCurrent, verbose);
                 }
 
@@ -693,10 +714,12 @@ namespace CPORLib.Algorithms
                 */
                 if (verbose)
                 {
+                    Console.WriteLine("Step: " + iStep);
                     Console.WriteLine($"Selected action: {bestValidAction.Name}");
                     Console.WriteLine($"New Underline state is: {string.Join(",", sUnderlyingState.Predicates.Where(predicate => !predicate.Negation && predicate.Name.StartsWith("at")))}");
                     Console.WriteLine($"New state is: {string.Join(",", CurrentState.Observed.Where(predicate => !predicate.Negation && predicate.Name.StartsWith("at")))}");
                 }
+                iStep++;
             }
 
             return Plan;

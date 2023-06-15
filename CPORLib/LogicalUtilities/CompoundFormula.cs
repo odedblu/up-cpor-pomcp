@@ -319,7 +319,7 @@ namespace CPORLib.LogicalUtilities
         }
 
 
-        public override Formula Reduce(ISet<Predicate> lKnown)
+        public override Formula Reduce(ISet<Predicate> lKnown, bool bContainsNegations)
         {
             CompoundFormula cfReduced = new CompoundFormula(Operator);
             Formula fNew = null;
@@ -331,15 +331,35 @@ namespace CPORLib.LogicalUtilities
                 {
                     fNew = null;
                     Predicate p = ((PredicateFormula)f).Predicate;
-                    if (lKnown.Contains(p))
-                        bTrue = true;
-                    else if (lKnown.Contains(p.Negate()))
-                        bFalse = true;
+                    if (bContainsNegations)
+                    {
+                        if (lKnown.Contains(p))
+                            bTrue = true;
+                        else if (lKnown.Contains(p.Negate()))
+                            bFalse = true;
+                        else
+                            fNew = f;
+                    }
                     else
-                        fNew = f;
+                    {
+                        if (p.Negation)
+                        {
+                            if (lKnown.Contains(p.Negate()))
+                                bFalse = true;
+                            else
+                                bTrue = true;
+                        }
+                        else
+                        {
+                            if (lKnown.Contains(p))
+                                bTrue = true;
+                            else
+                                bFalse = true;
+                        }
+                    }
                 }
                 else
-                    fNew = ((CompoundFormula)f).Reduce(lKnown);
+                    fNew = ((CompoundFormula)f).Reduce(lKnown, bContainsNegations);
                 //if (fNew.IsTrue(lKnown))
                 if (bTrue || !bFalse && fNew.IsTrue(null))
                 {
@@ -429,7 +449,7 @@ namespace CPORLib.LogicalUtilities
                 else
                 {
                     CompoundFormula cf = (CompoundFormula)f;
-                    Formula fReduce = cf.Reduce(lObligatory);
+                    Formula fReduce = cf.Reduce(lObligatory, true);
                     if (fReduce is PredicateFormula)
                     {
                         if (((PredicateFormula)fReduce).Predicate == Utilities.FALSE_PREDICATE)
@@ -794,6 +814,9 @@ namespace CPORLib.LogicalUtilities
 
         public override Formula Simplify()
         {
+            if (!Options.SimplifyCompoundFormulas)
+                return this;
+
             Formula fSimplified = null;
             if (Simplified)
                 return this;
@@ -906,7 +929,7 @@ namespace CPORLib.LogicalUtilities
                 foreach (Predicate p in lObligatory)
                     cfAnd.AddOperand(p);
                 foreach (Formula f in Operands)
-                    cfOr.AddOperand(f.Reduce(lObligatory));
+                    cfOr.AddOperand(f.Reduce(lObligatory, true));
                 cfAnd.AddOperand(cfOr);
                 return cfAnd;
             }
@@ -1410,6 +1433,21 @@ namespace CPORLib.LogicalUtilities
             throw new NotImplementedException();
         }
 
+        public override bool ContainsProbabilisticEffects()
+        {
+            if (Operator == "and")
+            {
+                foreach (Formula f in Operands)
+                    if (f.ContainsNonDeterministicEffect())
+                        return true;
+                return false;
+            }
+            if (Operator == "when")
+                return Operands[1].ContainsProbabilisticEffects();
+
+            return false;
+        }
+
         public override int GetMaxNonDeterministicOptions()
         {
             if (Operator == "or" || Operator == "oneof")
@@ -1783,7 +1821,7 @@ namespace CPORLib.LogicalUtilities
             return cfNew;
         }
 
-        public override Formula ReduceConditions(ISet<Predicate> lKnown)
+        public override Formula ReduceConditions(ISet<Predicate> lKnown, bool bContainsNegations, ISet<Predicate> lRelevantOptions)
         {
             CompoundFormula cfNew = new CompoundFormula(Operator);
             if (Operator == "and")// || Operator == "or" || Operator == "oneof")
@@ -1792,7 +1830,7 @@ namespace CPORLib.LogicalUtilities
                 {
                     if (f is CompoundFormula)
                     {
-                        Formula fTag = f.ReduceConditions(lKnown);
+                        Formula fTag = f.ReduceConditions(lKnown, bContainsNegations, lRelevantOptions);
                         if (fTag != null)
                             cfNew.SimpleAddOperand(fTag);
                     }
@@ -1802,9 +1840,17 @@ namespace CPORLib.LogicalUtilities
             }
             else if (Operator == "when")
             {
-                Formula fReduced = Operands[0].Reduce(lKnown);
+                Formula fReduced = Operands[0].Reduce(lKnown, bContainsNegations);
                 if (fReduced.IsTrue(null))
+                {
+                    ISet<Predicate> lCondition = Operands[0].GetAllPredicates();
+                    foreach (Predicate p in lCondition)
+                    {
+                        if (p.Name.Contains(Utilities.OPTION_PREDICATE))
+                            lRelevantOptions.Add(p);
+                    }
                     return Operands[1];
+                }
                 if (fReduced.IsFalse(null))
                     return null;
                 cfNew.AddOperand(fReduced);
@@ -2161,5 +2207,29 @@ namespace CPORLib.LogicalUtilities
             return l;
         }
 
+        public override void GetProbabilisticOptions(List<Formula> lOptions)
+        {
+            if (Operator == "and")
+            {
+                foreach (Formula f in Operands)
+                    f.GetProbabilisticOptions(lOptions);
+            }
+            else if (Operator == "when")
+            {
+                List<Formula> lConditionalOptions = new List<Formula>();
+                Operands[1].GetProbabilisticOptions(lConditionalOptions);
+                foreach (Formula f in lConditionalOptions)
+                {
+                    CompoundFormula cfWhen = new CompoundFormula("when");
+                    cfWhen.AddOperand(Operands[0]);
+                    cfWhen.AddOperand(f);
+                    lOptions.Add(cfWhen);
+                }
+
+
+            }
+            else
+                throw new NotImplementedException();
+        }
     }
 }

@@ -380,13 +380,33 @@ namespace CPORLib.LogicalUtilities
             return cfOr.Simplify();
         }
 
-        public override Formula Reduce(ISet<Predicate> lKnown)
+        public override Formula Reduce(ISet<Predicate> lKnown, bool bContainsNegations)
         {
             Predicate pReduced = Predicate;
-            if (lKnown.Contains(Predicate))
-                pReduced = Utilities.TRUE_PREDICATE;
-            if (lKnown.Contains(Predicate.Negate()))
-                pReduced = Utilities.FALSE_PREDICATE;
+            if (bContainsNegations)
+            {
+                if (lKnown.Contains(Predicate))
+                    pReduced = Utilities.TRUE_PREDICATE;
+                if (lKnown.Contains(Predicate.Negate()))
+                    pReduced = Utilities.FALSE_PREDICATE;
+            }
+            else
+            {
+                if(Predicate.Negation)
+                {
+                    if(lKnown.Contains(Predicate.Negate()))
+                        pReduced = Utilities.FALSE_PREDICATE;
+                    else
+                        pReduced = Utilities.TRUE_PREDICATE;
+                }
+                else
+                {
+                    if (lKnown.Contains(Predicate))
+                        pReduced = Utilities.TRUE_PREDICATE;
+                    else
+                        pReduced = Utilities.FALSE_PREDICATE;
+                }
+            }
             return new PredicateFormula(pReduced);
         }
 
@@ -487,7 +507,7 @@ namespace CPORLib.LogicalUtilities
                 return new PredicateFormula(Predicate.GenerateKnowPredicate(Predicate));
         }
 
-        public override Formula ReduceConditions(ISet<Predicate> lKnown)
+        public override Formula ReduceConditions(ISet<Predicate> lKnown, bool bContainsNegations, ISet<Predicate> lRelevantOptions)
         {
             return new PredicateFormula(Predicate);
         }
@@ -507,6 +527,16 @@ namespace CPORLib.LogicalUtilities
         public override void GetNonDeterministicOptions(List<CompoundFormula> lOptions)
         {
 
+        }
+
+        public override bool ContainsProbabilisticEffects()
+        {
+            return false;
+        }
+
+        public override void GetProbabilisticOptions(List<Formula> lOptions)
+        {
+            
         }
     }
 }

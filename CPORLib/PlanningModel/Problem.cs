@@ -343,11 +343,11 @@ namespace CPORLib.PlanningModel
                 HashSet<Predicate> lUnassignedReduced = new HashSet<Predicate>(lUnassigned);
                 lUnassignedReduced.Remove(p);
                 lAssigned.Add(p);
-                fReduced = cfUnknown.Reduce(lAssigned);
+                fReduced = cfUnknown.Reduce(lAssigned, true);
                 AddReasoningActions(fReduced, lUnassignedReduced, lAssigned, dActions);
                 lAssigned.Remove(p);
                 lAssigned.Add(p.Negate());
-                fReduced = cfUnknown.Reduce(lAssigned);
+                fReduced = cfUnknown.Reduce(lAssigned, true);
                 AddReasoningActions(fReduced, lUnassignedReduced, lAssigned, dActions);
                 lAssigned.Remove(p.Negate());
             }

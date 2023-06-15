@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using CPORLib.PlanningModel;
 using CPORLib.Tools;
 
@@ -140,11 +141,21 @@ namespace CPORLib.LogicalUtilities
             throw new NotImplementedException();
         }
 
-        public override Formula Reduce(ISet<Predicate> lKnown)
+        public override Formula Reduce(ISet<Predicate> lKnown, bool bContainsNegations)
         {
             ProbabilisticFormula pf = new ProbabilisticFormula();
+            bool bAllNull = true;
             for (int i = 0; i < Options.Count; i++)
-                pf.AddOption(Options[i].Reduce(lKnown), Probabilities[i]);
+            {
+                Formula fReduced = Options[i].Reduce(lKnown, bContainsNegations);
+                if (fReduced != null && !fReduced.IsFalse(null) && !fReduced.IsTrue(null)) //we need to modify the probabilties accordingly - not doing this for now
+                {
+                    pf.AddOption(fReduced, Probabilities[i]);
+                    bAllNull = false;
+                }
+            }
+            if (bAllNull)
+                return null;
             return pf;
         }
 
@@ -212,7 +223,7 @@ namespace CPORLib.LogicalUtilities
             throw new NotImplementedException();
         }
 
-        public override Formula ReduceConditions(ISet<Predicate> lKnown)
+        public override Formula ReduceConditions(ISet<Predicate> lKnown, bool bContainsNegations, ISet<Predicate> lRelevantOptions)
         {
             throw new NotImplementedException();
         }
@@ -239,6 +250,45 @@ namespace CPORLib.LogicalUtilities
         public override void GetNonDeterministicOptions(List<CompoundFormula> lOptions)
         {
             throw new NotImplementedException();
+        }
+
+        public override bool ContainsProbabilisticEffects()
+        {
+            return true;
+        }
+
+        public override void GetProbabilisticOptions(List<Formula> lOptions)
+        {
+            lOptions.Add(this);
+        }
+
+        public int Choose(ISet<Predicate> lAssignment)
+        {
+            double dRand = RandomGenerator.NextDouble();
+            double dInitialRand = dRand;
+            int iOption = 0, iChosenOption = -1;
+            for( iOption = 0; iOption < Options.Count;iOption++)
+            {
+                dRand -= Probabilities[iOption];
+
+                ISet<Predicate> lPredicates = Options[iOption].GetAllPredicates();//if the internal is a conditional effect then we need something more complicate
+
+                if (dRand < 0.01)
+                {
+                    iChosenOption = iOption;
+                }
+
+                foreach (Predicate p in lPredicates)
+                {
+                    if (iOption == iChosenOption)
+                        lAssignment.Add(p);
+                    else
+                        lAssignment.Add(p.Negate());
+                }
+                
+            }
+            
+            return iChosenOption;
         }
     }
 }

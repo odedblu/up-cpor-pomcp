@@ -35,7 +35,7 @@ namespace CPORLib.Algorithms
 
 
 
-        public void AddObservationChild(PartiallySpecifiedState partiallySpecifiedState, Formula fObservation, BelifeParticles particleFilter)
+        public void AddObservationChild(PartiallySpecifiedState partiallySpecifiedState, Formula fObservation, BeliefParticles particleFilter)
         {
             int iHashCode = ActionPomcpNode.GetObservationsHash(fObservation);
             ObservationPomcpNode nObservation = new ObservationPomcpNode(this, partiallySpecifiedState, particleFilter, fObservation);
@@ -50,7 +50,7 @@ namespace CPORLib.Algorithms
             ObservationPomcpNode nObservation = (ObservationPomcpNode)Children[iHashCode];
             return nObservation;
         }
-        public ObservationPomcpNode AddObservationChilds(List<Predicate> Observations, PartiallySpecifiedState partiallySpecifiedState, BelifeParticles particleFilter)
+        public ObservationPomcpNode AddObservationChilds(List<Predicate> Observations, PartiallySpecifiedState partiallySpecifiedState, BeliefParticles particleFilter)
         {
             if (Children.ContainsKey(GetObservationsHash(Observations)))
             {

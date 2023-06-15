@@ -26,7 +26,7 @@ public class Program
         FFUtilities.Verbose = false;
         gcmd_line.display_info = 0;
         gcmd_line.debug = 0;
-        RunTest("doors5", bOnline);
+        RunTest("localize5stay", bOnline);
           RunTest("wumpus05", bOnline);
        RunTest("localize5", bOnline);
 
