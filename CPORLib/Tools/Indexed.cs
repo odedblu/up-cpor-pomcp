@@ -26,6 +26,8 @@ namespace CPORLib.Tools
 
         public static void Reset()
         {
+            foreach(var t in Indexes.Keys)
+                t.m_iIndex = -1;
             Indexes = new Dictionary<Indexed<T>, int>();
             CountIndexes = 0;
         }
@@ -46,6 +48,7 @@ namespace CPORLib.Tools
             */
             if (!Indexes.TryGetValue(this, out int index))
             {
+                
                 index = CountIndexes;
                 Indexes[this] = index;
                 CountIndexes++;

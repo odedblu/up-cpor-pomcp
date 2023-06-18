@@ -12,7 +12,6 @@ namespace CPORLib.LogicalUtilities
         public static GroundedPredicate pTruePredicate = Utilities.TRUE_PREDICATE;
         private GroundedPredicate m_gpNegation;
 
-        public int Index;
 
         public GroundedPredicate(string sName)
             : base(sName)
@@ -21,7 +20,6 @@ namespace CPORLib.LogicalUtilities
             //    Debug.WriteLine("Initialized  a false predicate");
             m_gpNegation = null;
             Constants = new List<Constant>();
-            Index = -1;
         }
         public GroundedPredicate(string sName, bool bNegate)
              : base(sName)
@@ -31,13 +29,11 @@ namespace CPORLib.LogicalUtilities
             Negation = bNegate;
             m_gpNegation = null;
             Constants = new List<Constant>();
-            Index = -1;
         }
         public GroundedPredicate(GroundedPredicate gpOther)
             : base(gpOther.Name, gpOther.Negation)
         {
             Constants = new List<Constant>(gpOther.Constants);
-            Index = -1;
         }
         protected override string GetString()
         {
@@ -239,28 +235,17 @@ namespace CPORLib.LogicalUtilities
             }
             return false;
         }
-        protected static Dictionary<string, int> GroundedPredicatesCache = new Dictionary<string, int>();
-    
+
         protected override int ComputeHashCode()
         {
-            if (GroundedPredicatesCache.ContainsKey(ToString()))
-            {
-                return GroundedPredicatesCache[ToString()];
-            }
-
             int iSum = 0;
-            unchecked
+            foreach (Constant c in Constants)
             {
-                foreach (Constant c in Constants)
-                {
-                    iSum += c.GetHashCode();
-                    iSum *= 100;
-                }
-                iSum += m_iName;
-                GroundedPredicatesCache[ToString()] = iSum;
-                Index = iSum;
-                return iSum;
+                iSum += c.GetHashCode();
+                iSum *= 100;
             }
+            iSum += m_iName;
+            return iSum;
         }
 
         public override Predicate Clone()

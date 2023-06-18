@@ -44,7 +44,7 @@ namespace CPORLib.Algorithms
                               Func<State, Problem,Action, double> rewardFunction,
                               bool ExactBelifeStateRepresentation=false) : base(problem.Domain, problem)
         {
-            MaxInnerDepth = 3;
+            MaxInnerDepth = 5;
             MaxOuterDepth = 50;
 
 

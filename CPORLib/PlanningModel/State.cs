@@ -291,7 +291,7 @@ namespace CPORLib.PlanningModel
                 
             }
             */
-            if (sNew.Predicates.Contains(Utilities.FALSE_PREDICATE))
+            if (sNew.Predicates.Contains(Utilities.FALSE_PREDICATE)) 
                 Debug.WriteLine("BUGBUG");
 
             if(!a.HasConditionalEffects && !a.HasProbabilisticEffects)

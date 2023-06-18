@@ -2914,6 +2914,7 @@ namespace CPORLib.PlanningModel
             model.Solve();
 
 
+
             if (model.State == SATInterface.State.Satisfiable)
             {
                 ISet<Predicate> lSolution = new HashSet<Predicate>();
