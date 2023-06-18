@@ -88,8 +88,8 @@ namespace CPORLib.PlanningModel
         {
             oldId = original.ID;
             ID = STATE_COUNT++;
-            //if (ID == 1574)
-             //   Console.Write("*");
+            if (ID == 574902)
+               Console.Write("*");
 
             IdentifiedDeadendStates = new List<State>();
 
@@ -336,6 +336,8 @@ namespace CPORLib.PlanningModel
         public PartiallySpecifiedState(PartiallySpecifiedState sPredecessor, Action aGeneratingAction)
         {
             ID = STATE_COUNT++;
+            if (ID == 574902)
+                Console.Write("*");
 
 
             countOfActionFromRoot = sPredecessor.countOfActionFromRoot + 1;

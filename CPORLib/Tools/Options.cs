@@ -28,7 +28,7 @@ namespace CPORLib.Tools
         public static bool ForceCNFBelief = false;
         public enum SatSolverTypes { SolverFoundation, ORTools, Deiruch };
         public static SatSolverTypes SatSolverType = SatSolverTypes.Deiruch;
-        public static bool SimplifyCompoundFormulas = true;
+        public static bool SimplifyCompoundFormulas = false;
 
         public static bool RecursiveClosedStates = false;
 

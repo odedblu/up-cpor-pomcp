@@ -945,6 +945,7 @@ namespace CPORLib.LogicalUtilities
                     return false;
                 if (Operands.Count != cf.Operands.Count)
                     return false;
+
                 foreach (Formula f in cf.Operands)
                     if (!Operands.Contains(f))
                         return false;

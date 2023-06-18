@@ -195,13 +195,11 @@ namespace CPORLib.PlanningModel
         }
         public virtual void GroundAllActions()
         {
-            ISet<Predicate> all = new UnifiedSet<Predicate>(m_lFixedAndKnown, m_lFixedAndHidden, m_lChangingPredicates);
-            AvailableActions = Problem.Domain.GroundAllActions(all, MaintainNegations);
+            AvailableActions = Problem.Domain.GroundAllActions(Predicates, MaintainNegations);
         }
         public bool Contains(Formula f)
         {
-            ISet<Predicate> all = new UnifiedSet<Predicate>(m_lFixedAndKnown, m_lFixedAndHidden, m_lChangingPredicates);
-            return f.ContainedIn(all, false);
+            return f.ContainedIn(Predicates, false);
         }
         public virtual State Clone()
         {
@@ -241,12 +239,11 @@ namespace CPORLib.PlanningModel
             if (m_dSuccssessors.TryGetValue(a.Name, out State s)) //need something smarter for probabilistic effects
                 return s;
 
-            ISet<Predicate> all = new UnifiedSet<Predicate>(m_lFixedAndKnown, m_lFixedAndHidden, m_lChangingPredicates);
 
             //if (m_lPredicates.Count != all.Count)
             //    Console.Write("*");
 
-            if (a.Preconditions != null && !a.Preconditions.IsTrue(all, MaintainNegations))
+            if (a.Preconditions != null && !a.Preconditions.IsTrue(Predicates, MaintainNegations))
                 return null;
 
             State sNew = Clone();
