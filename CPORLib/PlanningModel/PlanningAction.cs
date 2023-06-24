@@ -28,7 +28,7 @@ namespace CPORLib.PlanningModel
         private ISet<Predicate> m_sCachedEffects;
 
         public bool HasConditionalEffects { get; protected set; }
-        public bool HasProbabilisticEffects { get; protected set; }
+        public bool HasProbabilisticEffects { get; set; }
 
 
         private PlanningAction m_aOriginal;
@@ -107,10 +107,16 @@ namespace CPORLib.PlanningModel
             }
             else
             {
-                Predicate p = ((PredicateFormula)f).Predicate;
-                if (p != Utilities.FALSE_PREDICATE)
+                if (f is ProbabilisticFormula)
                 {
-                    fRemovePFalse.AddOperand(p);
+                    HasProbabilisticEffects = true;
+                }
+                else {
+                    Predicate p = ((PredicateFormula)f).Predicate;
+                    if (p != Utilities.FALSE_PREDICATE)
+                    {
+                        fRemovePFalse.AddOperand(p);
+                    }
                 }
             }
             Effects = fRemovePFalse;

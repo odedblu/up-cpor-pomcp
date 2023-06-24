@@ -42,6 +42,8 @@ namespace CPORLib.Algorithms
         /// <param name="s"> State to add to belife particle. </param>
         public void AddState(State s)
         {
+            if(s == null)
+                return;
             s.ClearOptionPredicates();
             if (this.ViewedStates.ContainsKey(s))
             {

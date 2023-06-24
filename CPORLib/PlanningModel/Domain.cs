@@ -2855,6 +2855,9 @@ namespace CPORLib.PlanningModel
                     {
                         aGrounded.SetEffects(pa.Effects.Ground(dBindings));
                         bValidEffects = ProcessEffects(aGrounded, dNewPredicates, lGroundedPredicates);
+                        aGrounded.HasProbabilisticEffects = pa.HasProbabilisticEffects;
+
+
 
                     }
                     if (bValidEffects)

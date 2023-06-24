@@ -224,7 +224,11 @@ namespace CPORLib.Algorithms
                 // Apply action on CurrentState.
                 State NextState = CurrentState.Apply(NextAction);
                 if (NextState == null)
+                {
                     Console.WriteLine("*");
+                    return;
+                }
+                
 
                 // Get the observation's predicates of this action.
                 Formula observation = null;
@@ -409,8 +413,8 @@ namespace CPORLib.Algorithms
             foreach (Action a in Node.PartiallySpecifiedState.Problem.GroundedActions)
             {
                 Node.PartiallySpecifiedState.ApplyOffline(a, out bool bPreconditionFailure, out PartiallySpecifiedState psTrueState, out PartiallySpecifiedState psFalseState);
-                if (a.Observe != null && (psTrueState == null || psFalseState == null)) //useless observation over something that we already know
-                    continue;
+                    if (a.Observe != null && (psTrueState == null || psFalseState == null)) //useless observation over something that we already know
+                        continue;
                 ActionPomcpNode nAction = new ActionPomcpNode(a);
                 if (!bPreconditionFailure)
                 {
