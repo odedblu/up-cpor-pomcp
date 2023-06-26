@@ -19,7 +19,7 @@
 	(:action problematic-move
       :parameters (?i - pos ?j - pos )
       :precondition (and (adj ?i ?j) (at ?i) (opened ?j) (problematic ?j))
-      :effect  (and (adj ?i ?j) (probabilistic 0.99 (and (not (at ?i)) (at ?j))))
+      :effect  (and (adj ?i ?j) (probabilistic 0.5 (and (not (at ?i)) (at ?j))))
 	 )
 )
 
