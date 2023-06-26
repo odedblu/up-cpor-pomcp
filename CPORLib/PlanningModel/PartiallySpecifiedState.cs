@@ -1993,13 +1993,31 @@ namespace CPORLib.PlanningModel
             }
             else
             {
+                if (fEffects is ProbabilisticFormula)
+                {
+                    List<Formula> lOptions = new List<Formula>();
+                    fEffects.GetProbabilisticOptions(lOptions);
+                    ProbabilisticFormula pf = (ProbabilisticFormula)fEffects;
+                    HashSet<Predicate> hsEffects = new HashSet<Predicate>();
+                    int iOption = pf.Choose(hsEffects);
+                    if (iOption != -1)
+                    {
+                        fEffects = pf.Options[iOption];
+                    }
+                    else
+                    {
+                        return;
+                    }
+                }
+
+
                 CompoundFormula cf = (CompoundFormula)fEffects;
-                if (cf.Operator == "oneof")
+                if (cf != null && cf.Operator == "oneof")
                 {
                     foreach (Formula f in cf.Operands)
                         AddHidden(f);
                 }
-                else if (cf.Operator != "and")
+                else if (cf != null && cf.Operator != "and")
                     throw new NotImplementedException();
                 else
                 {
@@ -2013,6 +2031,8 @@ namespace CPORLib.PlanningModel
                             AddEffects(f);
                     }
                 }
+
+
             }
         }
 
