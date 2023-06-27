@@ -110,6 +110,7 @@ namespace CPORLib.PlanningModel
                 if (f is ProbabilisticFormula)
                 {
                     HasProbabilisticEffects = true;
+                    fRemovePFalse.AddOperand(f);
                 }
                 else {
                     Predicate p = ((PredicateFormula)f).Predicate;
