@@ -225,7 +225,13 @@ namespace CPORLib.LogicalUtilities
 
         public override Formula ReduceConditions(ISet<Predicate> lKnown, bool bContainsNegations, ISet<Predicate> lRelevantOptions)
         {
-            throw new NotImplementedException();
+            ProbabilisticFormula fNew = new ProbabilisticFormula();
+            for(int i = 0; i < Options.Count;i++)
+            {
+                Formula fOption = Options[i].ReduceConditions(lKnown, bContainsNegations, lRelevantOptions);
+                fNew.AddOption(fOption, Probabilities[i]);
+            }
+            return fNew;
         }
 
         public override Formula RemoveNegations()
