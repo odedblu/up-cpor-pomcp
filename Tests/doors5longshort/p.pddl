@@ -162,7 +162,7 @@
         (opened p1-4)
         (opened p1-5)
      
-        (opened p2-3)
+        
         (opened p2-5)
      
         (opened p3-1)

@@ -89,9 +89,13 @@ namespace CPORLib.Algorithms
             foreach (KeyValuePair<State, int> stateFrequency in this.ViewedStates)
             {
                 // Handle Probabilty actions
-                if (a.Effects is ProbabilisticFormula)
+                if (a.Effects != null && a.Effects.ContainsProbabilisticEffects())
                 {
                     double UnchangeStateProbability = 1; // Calculate whats the probabilty of staying in the same state.
+                    if(a.Effects is CompoundFormula && ((CompoundFormula)a.Effects).Operands.Count() == 1)
+                    {
+                        a.Effects = ((CompoundFormula)a.Effects).Operands[0];
+                    }
                     ProbabilisticFormula probabilisticEffects = a.Effects as ProbabilisticFormula;
                     for (int i = 0; i < probabilisticEffects.Probabilities.Count; i++)
                     {

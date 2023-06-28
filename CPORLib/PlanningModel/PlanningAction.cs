@@ -665,12 +665,17 @@ namespace CPORLib.PlanningModel
             HashSet<Predicate> hsNonDetPredicates = new HashSet<Predicate>();
             foreach (Formula cf in lOptions)
                 cf.GetAllPredicates(hsNonDetPredicates);
-            CompoundFormula cfEffects = (CompoundFormula)Effects;
+
+
             CompoundFormula cfAnd = new CompoundFormula("and");
-            foreach (Formula f in cfEffects.Operands)
+            if (Effects is CompoundFormula)
             {
-                if (!f.ContainsProbabilisticEffects())
-                    cfAnd.AddOperand(f);
+                CompoundFormula cfEffects = (CompoundFormula)Effects;
+                foreach (Formula f in cfEffects.Operands)
+                {
+                    if (!f.ContainsProbabilisticEffects())
+                        cfAnd.AddOperand(f);
+                }
             }
 
 

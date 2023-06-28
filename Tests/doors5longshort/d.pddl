@@ -12,14 +12,14 @@
 
    (:action regular-move
       :parameters (?i - pos ?j - pos )
-      :precondition (and (adj ?i ?j) (at ?i) (opened ?j) (not (problematic ?j)))
+      :precondition (and (adj ?i ?j) (at ?i) (opened ?j))
       :effect  (and (not (at ?i)) (at ?j))
       )
 	  
-	(:action problematic-move
+	(:action try-open-door
       :parameters (?i - pos ?j - pos )
-      :precondition (and (adj ?i ?j) (at ?i) (opened ?j) (problematic ?j))
-      :effect  (probabilistic 0.5 (and (not (at ?i)) (at ?j)))
+      :precondition (and (adj ?i ?j) (at ?i) (problematic ?j))
+      :effect  (probabilistic 0.9999 (and (opened ?j))))
 	 )
 )
 
