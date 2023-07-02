@@ -116,7 +116,7 @@ namespace CPORLib.Algorithms
                         }
                         if (bApplicable)
                         {
-                            ISet<Predicate> lEffects = a.GetApplicableEffects(lCurrentPredicates, true);
+                            ISet<Predicate> lEffects = a.GetApplicableEffects(lCurrentPredicates, true, true);
                             foreach (Predicate p in lEffects)
                             {
                                 //if (!p.Negation)

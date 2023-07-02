@@ -2875,7 +2875,7 @@ namespace CPORLib.PlanningModel
         {
             if (a.Effects == null)
                 return true;
-            ISet<Predicate> lApplicableEffects = a.GetApplicableEffects(lGroundedPredicates, false);
+            ISet<Predicate> lApplicableEffects = a.GetApplicableEffects(lGroundedPredicates, false, true);
             foreach (GroundedPredicate gp in lApplicableEffects)
             {
                 if (gp == Utilities.FALSE_PREDICATE)

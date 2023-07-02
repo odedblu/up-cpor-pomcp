@@ -156,9 +156,13 @@ namespace CPORLib.PlanningModel
                         else
                             lObligatory.Add(fSub);
                     }
-                    else if (fSub is ProbabilisticFormula)
+                    else if (fSub is ProbabilisticFormula pf)
                     {
-                        //not doing anything here - assuming no nested conditions inside probabilistic
+                        //assuming no nested conditions or disjunctions inside probabilistic
+                        foreach(Formula fOption in pf.Options)
+                        {
+                            lObligatory.Add(fOption);
+                        }
                     }
                 }
             }
@@ -179,6 +183,44 @@ namespace CPORLib.PlanningModel
                 }
             }
         }
+
+
+
+        private void SplitEffects(Formula fEffects, List<CompoundFormula> lConditions, List<Formula> lObligatory, bool bAssumeAllProbabiliticHold)
+        {
+            if (fEffects == null)
+                return;
+            if (fEffects is PredicateFormula)
+            {
+                lObligatory.Add(fEffects);
+                return;
+            }
+            if (fEffects is CompoundFormula cfEffects )
+            {
+                if (cfEffects.Operator == "when")
+                {
+                    lConditions.Add(cfEffects);
+                    return;
+                }
+                if (cfEffects.Operator != "and")
+                    throw new NotImplementedException();
+                foreach (Formula fSub in cfEffects.Operands)
+                {
+                    SplitEffects(fSub, lConditions, lObligatory, bAssumeAllProbabiliticHold);
+                }
+            }
+            if (fEffects is ProbabilisticFormula pf)
+            {
+                if (!bAssumeAllProbabiliticHold)
+                    throw new NotImplementedException();
+                foreach (Formula fSub in pf.Options)
+                {
+                    SplitEffects(fSub, lConditions, lObligatory, bAssumeAllProbabiliticHold);
+                }
+            }
+        }
+
+
 
         public List<CompoundFormula> GetConditions()
         {
@@ -237,7 +279,8 @@ namespace CPORLib.PlanningModel
             return aNew;
         }
 
-        public ISet<Predicate> GetApplicableEffects(ISet<Predicate> lPredicates, bool bContainsNegations)
+        
+        public ISet<Predicate> GetApplicableEffects(ISet<Predicate> lPredicates, bool bContainsNegations, bool bAssumeAllProbabilisticHold)
         {
             if (m_sCachedEffects != null)
                 return m_sCachedEffects;
@@ -246,7 +289,7 @@ namespace CPORLib.PlanningModel
             List<Formula> lObligatory = new List<Formula>();
             ISet<Predicate> lEffects = new GenericArraySet<Predicate>();
 
-            SplitEffects(lConditions, lObligatory);
+            SplitEffects(Effects, lConditions, lObligatory, bAssumeAllProbabilisticHold);
 
             foreach (PredicateFormula f in lObligatory)
                 AddPredicatesToEffectList(lEffects, f);
@@ -268,7 +311,6 @@ namespace CPORLib.PlanningModel
                     {
                         //cfEffects.AddOperand(cfWhen.Operands[1]);
                         AddPredicatesToEffectList(lEffects, cfWhen.Operands[1]);
-
                     }
                 }
 

@@ -273,7 +273,7 @@ namespace CPORLib.Algorithms
                         {
                             if (aValidStates[i])
                             {
-                                ISet<Predicate> lEffects = a.GetApplicableEffects(hsAll[i], false);
+                                ISet<Predicate> lEffects = a.GetApplicableEffects(hsAll[i], false, true);
                                 foreach (GroundedPredicate gpEffect in lEffects)
                                 {
                                     if (!gpEffect.Negation)
@@ -484,7 +484,7 @@ namespace CPORLib.Algorithms
                     {
                         for (int i = 0; i < lAll.Count; i++)
                         {
-                            ISet<Predicate> lEffects  = a.GetApplicableEffects(hsAll[i], false);
+                            ISet<Predicate> lEffects  = a.GetApplicableEffects(hsAll[i], false, true);
                             foreach (GroundedPredicate gpEffect in lEffects)
                             {
                                 if (!gpEffect.Negation)

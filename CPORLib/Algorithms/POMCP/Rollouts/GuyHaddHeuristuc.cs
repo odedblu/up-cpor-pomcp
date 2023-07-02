@@ -272,7 +272,7 @@ namespace CPORLib.Algorithms
                     if (bContainsAll)
                     {
                        
-                        ISet<Predicate> lEffects = a.GetApplicableEffects(hsAll, false);
+                        ISet<Predicate> lEffects = a.GetApplicableEffects(hsAll, false, true);
                         foreach (GroundedPredicate gpEffect in lEffects)
                         {
                             if (!gpEffect.Negation)
