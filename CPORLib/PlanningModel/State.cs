@@ -236,7 +236,7 @@ namespace CPORLib.PlanningModel
             if (a is ParametrizedAction)
                 return null;
 
-            if (m_dSuccssessors.TryGetValue(a.Name, out State s)) //need something smarter for probabilistic effects
+            if (m_dSuccssessors.TryGetValue(a.ToString(), out State s)) //need something smarter for probabilistic effects
                 return s;
 
 
@@ -296,7 +296,7 @@ namespace CPORLib.PlanningModel
 
             if(!a.HasConditionalEffects && !a.HasProbabilisticEffects)
             {
-                m_dSuccssessors[a.Name] = sNew;
+                m_dSuccssessors[a.ToString()] = sNew;
             }
 
             return sNew;

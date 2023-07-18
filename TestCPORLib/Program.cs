@@ -27,10 +27,15 @@ public class Program
         gcmd_line.display_info = 0;
         gcmd_line.debug = 0;
 
-        //RunTest("localize5stay", bOnline);
-
-        RunTest("doors5longshort", bOnline);
         
+
+
+        //Intersting problems:
+
+        //RunTest("doors5longshort", bOnline);
+        RunTest("blocks3Hardb2b", bOnline);
+
+
         /* RunTest("localize5stay2", bOnline);
            RunTest("wumpus05", bOnline);
         RunTest("localize5", bOnline);

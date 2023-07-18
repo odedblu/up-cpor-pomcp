@@ -6,7 +6,7 @@ namespace CPORLib.Tools
 {
     class RandomGenerator
     {
-        private static Random m_rnd = new Random(0);
+        private static Random m_rnd = new Random(1);
         public static void Init(int iSeed)
         {
             Debug.WriteLine("Init random seed to: " + iSeed);

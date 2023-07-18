@@ -14,3 +14,19 @@ D:\OneDrive\OneDrive - BGU\Research\projects\AIPlan4EU\up-cpor-pomcp\CPORLib\obj
 D:\OneDrive\OneDrive - BGU\Research\projects\AIPlan4EU\up-cpor-pomcp\CPORLib\obj\Debug\net6.0\refint\CPORLib.dll
 D:\OneDrive\OneDrive - BGU\Research\projects\AIPlan4EU\up-cpor-pomcp\CPORLib\obj\Debug\net6.0\CPORLib.pdb
 D:\OneDrive\OneDrive - BGU\Research\projects\AIPlan4EU\up-cpor-pomcp\CPORLib\obj\Debug\net6.0\ref\CPORLib.dll
+C:\Users\oded1\source\repos\up-cpor-pomcp\CPORLib\bin\Debug\net6.0\CaDiCaL.dll
+C:\Users\oded1\source\repos\up-cpor-pomcp\CPORLib\bin\Debug\net6.0\YalSAT.dll
+C:\Users\oded1\source\repos\up-cpor-pomcp\CPORLib\bin\Debug\net6.0\cryptominisat5win.dll
+C:\Users\oded1\source\repos\up-cpor-pomcp\CPORLib\bin\Debug\net6.0\kissat.dll
+C:\Users\oded1\source\repos\up-cpor-pomcp\CPORLib\bin\Debug\net6.0\CPORLib.deps.json
+C:\Users\oded1\source\repos\up-cpor-pomcp\CPORLib\bin\Debug\net6.0\CPORLib.dll
+C:\Users\oded1\source\repos\up-cpor-pomcp\CPORLib\bin\Debug\net6.0\CPORLib.pdb
+C:\Users\oded1\source\repos\up-cpor-pomcp\CPORLib\obj\Debug\net6.0\CPORLib.csproj.AssemblyReference.cache
+C:\Users\oded1\source\repos\up-cpor-pomcp\CPORLib\obj\Debug\net6.0\CPORLib.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\oded1\source\repos\up-cpor-pomcp\CPORLib\obj\Debug\net6.0\CPORLib.AssemblyInfoInputs.cache
+C:\Users\oded1\source\repos\up-cpor-pomcp\CPORLib\obj\Debug\net6.0\CPORLib.AssemblyInfo.cs
+C:\Users\oded1\source\repos\up-cpor-pomcp\CPORLib\obj\Debug\net6.0\CPORLib.csproj.CoreCompileInputs.cache
+C:\Users\oded1\source\repos\up-cpor-pomcp\CPORLib\obj\Debug\net6.0\CPORLib.dll
+C:\Users\oded1\source\repos\up-cpor-pomcp\CPORLib\obj\Debug\net6.0\refint\CPORLib.dll
+C:\Users\oded1\source\repos\up-cpor-pomcp\CPORLib\obj\Debug\net6.0\CPORLib.pdb
+C:\Users\oded1\source\repos\up-cpor-pomcp\CPORLib\obj\Debug\net6.0\ref\CPORLib.dll

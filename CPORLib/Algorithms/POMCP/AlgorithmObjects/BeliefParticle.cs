@@ -13,11 +13,11 @@ namespace CPORLib.Algorithms
 {
     public class BeliefParticles
     {
-        public Dictionary<State, int> ViewedStates;
+        public Dictionary<State, double> ViewedStates;
 
         public BeliefParticles()
         {
-            this.ViewedStates = new Dictionary<State, int>();
+            this.ViewedStates = new Dictionary<State, double>();
         }
 
 
@@ -25,10 +25,10 @@ namespace CPORLib.Algorithms
         /// Get the size of the belife particle.
         /// </summary>
         /// <returns> Size of the belife particle. </returns>
-        public int Size()
+        public double Size()
         {
-            int newParticleSize = 0;
-            foreach (KeyValuePair<State, int> stateFrequency in this.ViewedStates)
+            double newParticleSize = 0;
+            foreach (KeyValuePair<State, double> stateFrequency in this.ViewedStates)
             {
                 newParticleSize += stateFrequency.Value;
             }
@@ -47,11 +47,11 @@ namespace CPORLib.Algorithms
             s.ClearOptionPredicates();
             if (this.ViewedStates.ContainsKey(s))
             {
-                this.ViewedStates[s]++;
+                this.ViewedStates[s] += 1.0;
             }
             else
             {
-                this.ViewedStates[s] = 1;
+                this.ViewedStates[s] = 1.0;
             }
         }
 
@@ -64,9 +64,9 @@ namespace CPORLib.Algorithms
         {
             double cummlativeProbability = 0;
             List<Tuple<double, State>> StateProbabilities = new List<Tuple<double, State>>();
-            foreach (KeyValuePair<State, int> stateFrequency in this.ViewedStates)
+            foreach (KeyValuePair<State, double> stateFrequency in this.ViewedStates)
             {
-                double StateProbability = (double)stateFrequency.Value / (double)this.Size();
+                double StateProbability = stateFrequency.Value / this.Size();
                 StateProbabilities.Add(new Tuple<double, State>(cummlativeProbability + StateProbability, stateFrequency.Key));
                 cummlativeProbability += StateProbability;
             }
@@ -86,7 +86,7 @@ namespace CPORLib.Algorithms
 
 
             // Foreach particle apply the action and update the new belife particle to have the same frequency.
-            foreach (KeyValuePair<State, int> stateFrequency in this.ViewedStates)
+            foreach (KeyValuePair<State, double> stateFrequency in this.ViewedStates)
             {
                 // Handle Probabilty actions
                 if (a.Effects != null && a.Effects.ContainsProbabilisticEffects())
@@ -101,13 +101,13 @@ namespace CPORLib.Algorithms
                     {
                         double ChosenEffectsProbability = probabilisticEffects.Probabilities[i];
                         UnchangeStateProbability -= ChosenEffectsProbability;
-                        int ProbabilityEffectRatioCount = (int)(ChosenEffectsProbability * stateFrequency.Value);
+                        double ProbabilityEffectRatioCount = ChosenEffectsProbability * stateFrequency.Value;
                         Action chosenAction = a.RemoveNonDeterminismByOptionIndex(i);
                         UpdateNextParticle(chosenAction, observationPredicats, NextBelifePatricle, stateFrequency, ProbabilityEffectRatioCount);
 
                     }
                     // Add to the praticle the case of staying in the same state.
-                    int UnchangedStateProbabilityEffectRatioCount = (int)(UnchangeStateProbability * stateFrequency.Value);
+                    double UnchangedStateProbabilityEffectRatioCount = UnchangeStateProbability * stateFrequency.Value;
                     if (UnchangedStateProbabilityEffectRatioCount > 0)
                     {
                         Action stayAction = a.RemoveNonDeterminismByOptionIndex(-1);
@@ -126,7 +126,7 @@ namespace CPORLib.Algorithms
             return NextBelifePatricle;
         }
 
-        private void UpdateNextParticle(Action a, Formula observationPredicats, BeliefParticles NextBelifePatricle, KeyValuePair<State, int> stateFrequency, int ProbabilityEffectRatioCount)
+        private void UpdateNextParticle(Action a, Formula observationPredicats, BeliefParticles NextBelifePatricle, KeyValuePair<State, double> stateFrequency, double ProbabilityEffectRatioCount)
         {
             State NewState = stateFrequency.Key.Apply(a);
             if (NewState != null)

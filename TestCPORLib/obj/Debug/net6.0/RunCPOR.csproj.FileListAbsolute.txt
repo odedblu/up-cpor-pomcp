@@ -122,3 +122,28 @@ D:\OneDrive\OneDrive - BGU\Research\projects\AIPlan4EU\up-cpor-pomcp\TestCPORLib
 D:\OneDrive\OneDrive - BGU\Research\projects\AIPlan4EU\up-cpor-pomcp\TestCPORLib\bin\Debug\net6.0\cryptominisat5win.dll
 D:\OneDrive\OneDrive - BGU\Research\projects\AIPlan4EU\up-cpor-pomcp\TestCPORLib\bin\Debug\net6.0\kissat.dll
 D:\OneDrive\OneDrive - BGU\Research\projects\AIPlan4EU\up-cpor-pomcp\TestCPORLib\bin\Debug\net6.0\SATInterface.dll
+C:\Users\oded1\source\repos\up-cpor-pomcp\TestCPORLib\bin\Debug\net6.0\CaDiCaL.dll
+C:\Users\oded1\source\repos\up-cpor-pomcp\TestCPORLib\bin\Debug\net6.0\YalSAT.dll
+C:\Users\oded1\source\repos\up-cpor-pomcp\TestCPORLib\bin\Debug\net6.0\cryptominisat5win.dll
+C:\Users\oded1\source\repos\up-cpor-pomcp\TestCPORLib\bin\Debug\net6.0\kissat.dll
+C:\Users\oded1\source\repos\up-cpor-pomcp\TestCPORLib\bin\Debug\net6.0\RunCPOR.exe
+C:\Users\oded1\source\repos\up-cpor-pomcp\TestCPORLib\bin\Debug\net6.0\RunCPOR.deps.json
+C:\Users\oded1\source\repos\up-cpor-pomcp\TestCPORLib\bin\Debug\net6.0\RunCPOR.runtimeconfig.json
+C:\Users\oded1\source\repos\up-cpor-pomcp\TestCPORLib\bin\Debug\net6.0\RunCPOR.dll
+C:\Users\oded1\source\repos\up-cpor-pomcp\TestCPORLib\bin\Debug\net6.0\RunCPOR.pdb
+C:\Users\oded1\source\repos\up-cpor-pomcp\TestCPORLib\bin\Debug\net6.0\SATInterface.dll
+C:\Users\oded1\source\repos\up-cpor-pomcp\TestCPORLib\bin\Debug\net6.0\Microsoft.Solver.Foundation.dll
+C:\Users\oded1\source\repos\up-cpor-pomcp\TestCPORLib\bin\Debug\net6.0\Python.Runtime.dll
+C:\Users\oded1\source\repos\up-cpor-pomcp\TestCPORLib\bin\Debug\net6.0\CPORLib.dll
+C:\Users\oded1\source\repos\up-cpor-pomcp\TestCPORLib\bin\Debug\net6.0\CPORLib.pdb
+C:\Users\oded1\source\repos\up-cpor-pomcp\TestCPORLib\obj\Debug\net6.0\RunCPOR.csproj.AssemblyReference.cache
+C:\Users\oded1\source\repos\up-cpor-pomcp\TestCPORLib\obj\Debug\net6.0\RunCPOR.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\oded1\source\repos\up-cpor-pomcp\TestCPORLib\obj\Debug\net6.0\RunCPOR.AssemblyInfoInputs.cache
+C:\Users\oded1\source\repos\up-cpor-pomcp\TestCPORLib\obj\Debug\net6.0\RunCPOR.AssemblyInfo.cs
+C:\Users\oded1\source\repos\up-cpor-pomcp\TestCPORLib\obj\Debug\net6.0\RunCPOR.csproj.CoreCompileInputs.cache
+C:\Users\oded1\source\repos\up-cpor-pomcp\TestCPORLib\obj\Debug\net6.0\RunCPOR.csproj.CopyComplete
+C:\Users\oded1\source\repos\up-cpor-pomcp\TestCPORLib\obj\Debug\net6.0\RunCPOR.dll
+C:\Users\oded1\source\repos\up-cpor-pomcp\TestCPORLib\obj\Debug\net6.0\refint\RunCPOR.dll
+C:\Users\oded1\source\repos\up-cpor-pomcp\TestCPORLib\obj\Debug\net6.0\RunCPOR.pdb
+C:\Users\oded1\source\repos\up-cpor-pomcp\TestCPORLib\obj\Debug\net6.0\RunCPOR.genruntimeconfig.cache
+C:\Users\oded1\source\repos\up-cpor-pomcp\TestCPORLib\obj\Debug\net6.0\ref\RunCPOR.dll

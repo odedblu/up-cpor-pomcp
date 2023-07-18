@@ -32,9 +32,9 @@ namespace CPORLib.Algorithms
 
         public double GetParticleAvarageHaddValue(BeliefParticles bf)
         {
-            int total_states_count = bf.Size();
+            double total_states_count = bf.Size();
             double score_sum = 0;
-            foreach (KeyValuePair<State,int> particle in bf.ViewedStates)
+            foreach (KeyValuePair<State,double> particle in bf.ViewedStates)
             {
                 double particle_rollout_value = rolloutPolicy.ComputeHAdd(particle.Key);
                 score_sum += particle_rollout_value * particle.Value;
