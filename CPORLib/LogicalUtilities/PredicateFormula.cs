@@ -257,6 +257,8 @@ namespace CPORLib.LogicalUtilities
 
         public override Formula Regress(PlanningAction a)
         {
+            if (a.Effects != null && a.Effects.ContainsProbabilisticEffects())
+                return RegressProb(a);
             if (a.ContainsNonDeterministicEffect)
                 return RegressNonDet(a);
             else
@@ -299,6 +301,22 @@ namespace CPORLib.LogicalUtilities
             cfOr.AddOperand(this);
             cfAndNot.AddOperand(cfOr);
             return cfAndNot.Simplify();
+        }
+
+
+        public Formula RegressProb(PlanningAction a)
+        {
+            Predicate pNegate = Predicate.Negate();
+            ProbabilisticFormula pfEffects = a.Effects as ProbabilisticFormula;
+            foreach (Formula optionalEffect in pfEffects.Options)
+            {
+                ISet<Predicate> lOptionalEffects = optionalEffect.GetAllPredicates();
+                if (lOptionalEffects.Contains(Predicate) || lOptionalEffects.Contains(pNegate))
+                {
+                    return new PredicateFormula(Utilities.TRUE_PREDICATE);
+                }
+            }
+            return new PredicateFormula(Utilities.FALSE_PREDICATE);
         }
 
         public Formula RegressDet(PlanningAction a)

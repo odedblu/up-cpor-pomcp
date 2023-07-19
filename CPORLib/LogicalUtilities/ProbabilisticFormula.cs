@@ -12,10 +12,12 @@ namespace CPORLib.LogicalUtilities
         public List<Formula> Options { get; private set; }
         public List<double> Probabilities { get; private set; }
 
+        public List<Predicate> ProbaEffectsAndNegations { get; set; }
         public ProbabilisticFormula()
         {
             Options = new List<Formula>();
             Probabilities = new List<double>();
+            ProbaEffectsAndNegations = new List<Predicate>();
         }
 
         public void AddOption(Formula fOption, double dProb)
@@ -99,6 +101,7 @@ namespace CPORLib.LogicalUtilities
             ProbabilisticFormula pf = new ProbabilisticFormula();
             for (int i = 0; i < Options.Count; i++)
                 pf.AddOption(Options[i].Clone(), Probabilities[i]);
+            pf.ProbaEffectsAndNegations = ProbaEffectsAndNegations;
             return pf;
         }
 

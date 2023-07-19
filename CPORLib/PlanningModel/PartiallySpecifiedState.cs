@@ -32,6 +32,7 @@ namespace CPORLib.PlanningModel
         public List<State> IdentifiedDeadendStates;
         public List<PartiallySpecifiedState> Parents { get; private set; }
         public Action GeneratingAction { get; private set; }
+
         public Formula GeneratingObservation
         {
             get
@@ -1054,6 +1055,7 @@ namespace CPORLib.PlanningModel
             ChildCount = 1;
             if (a.Effects != null)
             {
+
                 if (a.HasConditionalEffects)
                 {
                     List<CompoundFormula> lApplicableConditions = ApplyKnown(a.GetConditions());
@@ -1068,6 +1070,30 @@ namespace CPORLib.PlanningModel
                     //bsNew.UpdateHidden(a, m_lObserved);
                     bsNew.UpdateHidden();
                 }
+                else if (a.Effects.ContainsProbabilisticEffects())
+                {
+                    if (a.Effects is CompoundFormula && ((CompoundFormula)a.Effects).Operands.Count() == 1)
+                    {
+                        a.Effects = ((CompoundFormula)a.Effects).Operands[0];
+                    }
+                    ProbabilisticFormula probabilisticEffects = a.Effects as ProbabilisticFormula;
+                    List<Predicate> probabilisticPredicates = new List<Predicate>();
+                    foreach (Formula f in probabilisticEffects.Options)
+                    {
+                        foreach (Predicate p in f.GetAllPredicates())
+                        {
+                            probabilisticPredicates.Add(p);
+                            probabilisticPredicates.Add(p.Negate());
+                        }
+                    }
+                    probabilisticEffects.ProbaEffectsAndNegations = probabilisticPredicates;
+                    a.Effects = probabilisticEffects;
+                    foreach (Predicate p in probabilisticPredicates)
+                    {
+                        bsNew.m_lObserved.Remove(p);
+                        bsNew.m_lHidden.Add(p.Canonical());
+                    }
+                }
                 else
                 {
                     bsNew.AddEffects(a.Effects);
@@ -1077,6 +1103,10 @@ namespace CPORLib.PlanningModel
                     bsNew.m_lObserved.Remove(pNonDet);
                     bsNew.m_lHidden.Add(pNonDet.Canonical());
                 }
+                
+               
+                
+
             }
             if (a.Observe != null)
             {
