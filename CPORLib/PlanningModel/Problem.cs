@@ -18,6 +18,7 @@ namespace CPORLib.PlanningModel
         private HashSet<Predicate> m_lKnown;
 
         private List<CompoundFormula> m_lHiddenFormulas;
+        private List<ProbabilisticFormula> m_lProbabilisticFormulas;
 
 
         public IEnumerable<CompoundFormula> HiddenFormulas { get { return m_lHiddenFormulas; } }
@@ -55,7 +56,7 @@ namespace CPORLib.PlanningModel
             m_dRelevantPredicates = new Dictionary<GroundedPredicate, HashSet<GroundedPredicate>>();
             m_lInitiallyUnknown = new HashSet<Predicate>();
             DeadEndList = new List<Formula>();
-
+            m_lProbabilisticFormulas = new List<ProbabilisticFormula>();
         }
 
         public void AddKnown(Predicate p)
@@ -70,11 +71,14 @@ namespace CPORLib.PlanningModel
         {
             return m_lInitiallyUnknown.Contains(p.Canonical());
         }
-        public void AddHidden(CompoundFormula cf)
-        {
-            Domain.AddHidden(cf);
 
-            ISet<Predicate> hs = cf.GetAllPredicates();
+        
+
+        public void AddHidden(Formula f)
+        {
+            Domain.AddHidden(f);
+
+            ISet<Predicate> hs = f.GetAllPredicates();
             foreach (GroundedPredicate gp in hs)
             {
                 m_lInitiallyUnknown.Add(gp.Canonical());
@@ -89,8 +93,11 @@ namespace CPORLib.PlanningModel
                 }
 
             }
-
-            m_lHiddenFormulas.Add(cf);
+            if (f is CompoundFormula cf)
+                m_lHiddenFormulas.Add(cf);
+            else if(f is ProbabilisticFormula pf)
+                m_lProbabilisticFormulas.Add(pf);
+                
         }
         public override string ToString()
         {
@@ -201,6 +208,8 @@ namespace CPORLib.PlanningModel
                 bs.AddInitialStateFormula(cf);
 
             }
+            foreach (ProbabilisticFormula pf in m_lProbabilisticFormulas)
+                bs.AddInitialStateFormula(pf);
             //bs.InitDNF();
             return bs;
         }

@@ -807,6 +807,16 @@ namespace CPORLib.PlanningModel
 
         public void AddInitialStateFormula(ProbabilisticFormula pf)
         {
+            if(pf.Options.Count > 1)
+            {
+                CompoundFormula cfOneof = new CompoundFormula("oneof");
+                foreach(Formula f in pf.Options)
+                {
+                    cfOneof.AddOperand(f);
+                }
+                AddInitialStateFormula(cfOneof);
+            }
+
             ISet<Predicate> lPredicates = pf.GetAllPredicates();
             foreach(Predicate p in lPredicates)
             {
@@ -819,6 +829,8 @@ namespace CPORLib.PlanningModel
                 cfOr.SimpleAddOperand(p.Negate());
                 AddInitialStateFormula(cfOr);
             }
+
+            
         }
 
         

@@ -3007,7 +3007,7 @@ namespace CPORLib.PlanningModel
             return m_lAlwaysConstant.Contains(p.Name);
         }
 
-        public void AddHidden(CompoundFormula cf)
+        public void AddHidden(Formula cf)
         {
             HashSet<Predicate> lUnknown = new HashSet<Predicate>();
             cf.GetAllPredicates(lUnknown);

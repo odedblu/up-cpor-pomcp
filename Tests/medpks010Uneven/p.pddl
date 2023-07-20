@@ -1,20 +1,26 @@
 (define (problem medicalPKS10)
 (:domain medicalPKS10)
 
- (:init 
- (probabilistic 0.1 (and (ill i0) (stain s0) (ndead))
-			 0.1 (and (ill i1) (stain s0) (ndead))
-			 0.1 (and (ill i2) (stain s0) (ndead))
-			 0.1 (and (ill i3) (stain s0) (ndead))
-			 0.1 (and (ill i4) (stain s0) (ndead))
-			 0.1 (and (ill i5) (stain s0) (ndead))
-			 0.1 (and (ill i6) (stain s0) (ndead))
-			 0.1 (and (ill i7) (stain s0) (ndead))
-			 0.1 (and (ill i8) (stain s0) (ndead))
-			 0.1 (and (ill i9) (stain s0) (ndead))
-			 0.1 (and (ill i10) (stain s0) (ndead))
-)
+ (:init
+	(and
+		(stain s0) (ndead)
+		(probabilistic 
+			0.1 (ill i0) 
+			0.1 (ill i1) 
+			0.1 (ill i2) 
+			0.1 (ill i3) 
+			0.1 (ill i4) 
+			0.1 (ill i5) 
+			0.1 (ill i6) 
+			0.1 (ill i7) 
+			0.1 (ill i8) 
+			0.1 (ill i9) 
+			0.1 (ill i10) 
+		)
+	)	 
+ )
 
-)
 
- (:goal (and (ill i0) (ndead))))
+
+ (:goal (and (ill i0) (ndead)))
+)
