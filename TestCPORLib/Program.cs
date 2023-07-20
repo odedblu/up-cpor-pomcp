@@ -28,13 +28,13 @@ public class Program
         gcmd_line.debug = 0;
 
 
-        //RunTest("medpks010Uneven", bOnline);
+        RunTest("medpks010Uneven", bOnline);
 
 
         //Intersting problems:
 
         //RunTest("doors5longshort", bOnline);
-        RunTest("blocks3Hardb2b", bOnline);
+        //RunTest("blocks3Hardb2b", bOnline);
 
 
         /* RunTest("localize5stay2", bOnline);

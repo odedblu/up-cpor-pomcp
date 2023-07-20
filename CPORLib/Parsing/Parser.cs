@@ -505,30 +505,57 @@ namespace CPORLib.Parsing
                 cfQuantified.AddOperand(fBody);
                 return cfQuantified;
             }
-            foreach (Expression eSub in exp.SubExpressions)
+            else if (exp.Type == "probabilistic")
             {
-                if (eSub is CompoundExpression)
+                ProbabilisticFormula pf = new ProbabilisticFormula();
+                int iExpression = 0;
+                for (iExpression = 0; iExpression < exp.SubExpressions.Count; iExpression += 2)
                 {
-                    bPredicate = false;
-                    break;
+                    //if (exp.SubExpressions[iExpression] is StringExpression)
+                    //    throw new InvalidDataException();
+                    string sProb = exp.SubExpressions[iExpression].ToString();
+                    double dProb = 0.0;
+                    if (sProb.Contains("/"))
+                    {
+                        string[] a = Utilities.SplitString(sProb, '/');
+                        dProb = double.Parse(a[0]) / double.Parse(a[1]);
+                    }
+                    else
+                    {
+                        dProb = double.Parse(sProb);
+                    }
+                    Formula f = ReadGroundedFormula((CompoundExpression)exp.SubExpressions[iExpression + 1],  d);
+                    pf.AddOption(f, dProb);
                 }
+                return pf;
             }
-            if (bPredicate)
-                return new PredicateFormula(ReadGroundedPredicate(exp, d));
             else
             {
-                CompoundFormula cf = new CompoundFormula(exp.Type);
-                int iExpression = 0;
-                for (iExpression = 0; iExpression < exp.SubExpressions.Count; iExpression++)
+                foreach (Expression eSub in exp.SubExpressions)
                 {
-                    Formula f = ReadGroundedFormula((CompoundExpression)exp.SubExpressions[iExpression], d);
-                    cf.SimpleAddOperand(f);
+                    if (eSub is CompoundExpression)
+                    {
+                        bPredicate = false;
+                        break;
+                    }
                 }
-                if (cf.Operator == "not" && cf.Operands[0] is PredicateFormula)
+                if (bPredicate)
+                    return new PredicateFormula(ReadGroundedPredicate(exp, d));
+                else
                 {
-                    return new PredicateFormula(((PredicateFormula)cf.Operands[0]).Predicate.Negate());
+                    CompoundFormula cf = new CompoundFormula(exp.Type);
+                    int iExpression = 0;
+                    for (iExpression = 0; iExpression < exp.SubExpressions.Count; iExpression++)
+                    {
+                        Formula f = ReadGroundedFormula((CompoundExpression)exp.SubExpressions[iExpression], d);
+                        cf.SimpleAddOperand(f);
+                    }
+                    if (cf.Operator == "not" && cf.Operands[0] is PredicateFormula)
+                    {
+                        return new PredicateFormula(((PredicateFormula)cf.Operands[0]).Predicate.Negate());
+                    }
+                    return cf;
                 }
-                return cf;
             }
         }
 
@@ -735,6 +762,8 @@ namespace CPORLib.Parsing
                         Formula f = ReadGroundedFormula(eSub, d);
                         if (f is CompoundFormula)
                             p.AddHidden((CompoundFormula)f);
+                        if (f is ProbabilisticFormula pf)
+                            p.AddHidden(pf);
                         if (f is PredicateFormula)//this happens in (not (p)) statments
                             p.AddKnown(((PredicateFormula)f).Predicate);
                     }
@@ -870,6 +899,7 @@ namespace CPORLib.Parsing
         private Expression ToExpression(CPORStack<string> sStack)
         {
             string sToken = sStack.Pop();
+            
             while (sToken.Trim() == "" || sToken == "\0")
                 sToken = sStack.Pop();
             if (sToken == "(")
