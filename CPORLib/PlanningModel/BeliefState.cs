@@ -817,10 +817,11 @@ namespace CPORLib.PlanningModel
                 CompoundFormula cfOr = new CompoundFormula("or");
                 cfOr.AddOperand(p);
                 cfOr.SimpleAddOperand(p.Negate());
-                m_lHiddenFormulas.Add(cfOr);
+                AddInitialStateFormula(cfOr);
             }
         }
 
+        
         public void AddInitialStateFormula(CompoundFormula cf)
         {
 
