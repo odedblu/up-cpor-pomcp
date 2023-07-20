@@ -33,8 +33,8 @@ public class Program
 
         //Intersting problems:
 
-        //RunTest("doors5longshort", bOnline);
-        RunTest("blocks3Hardb2b", bOnline);
+        RunTest("doors5longshort", bOnline);
+        //RunTest("blocks3Hardb2b", bOnline);
 
 
         /* RunTest("localize5stay2", bOnline);
