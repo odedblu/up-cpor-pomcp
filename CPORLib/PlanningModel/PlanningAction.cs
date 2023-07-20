@@ -697,6 +697,7 @@ namespace CPORLib.PlanningModel
 
         public PlanningAction RemoveProbabilisticEffects(BeliefState bsInitialBelief)
         {
+
             if (Effects == null || !Effects.ContainsProbabilisticEffects())
                 return this;
             PlanningAction aNew = Clone();
@@ -768,6 +769,8 @@ namespace CPORLib.PlanningModel
                 }
 
                 aNew.Effects = cfAnd;
+                aNew.HasConditionalEffects = true;
+
                 foreach (Predicate p in hsNonDetPredicates)
                     aNew.NonDeterministicEffects.Add(p);
             }

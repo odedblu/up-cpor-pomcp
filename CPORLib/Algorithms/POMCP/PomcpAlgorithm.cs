@@ -420,13 +420,13 @@ namespace CPORLib.Algorithms
                 {
                     if (psTrueState != null)
                     {
-                        BeliefParticles PositiveNextParticleFilter = Node.ParticleFilter.Apply(a, a.Observe);
+                        BeliefParticles PositiveNextParticleFilter = new BeliefParticles();
                         nAction.AddObservationChild(psTrueState, a.Observe, PositiveNextParticleFilter);
 
                     }
                     if (psFalseState != null)
                     {
-                        BeliefParticles NegativeNextParticleFilter = Node.ParticleFilter.Apply(a, a.Observe.Negate());
+                        BeliefParticles NegativeNextParticleFilter = new BeliefParticles();
                         nAction.AddObservationChild(psFalseState, a.Observe.Negate(), NegativeNextParticleFilter);
                     }
                     Node.AddActionPomcpNode(nAction);
@@ -448,15 +448,15 @@ namespace CPORLib.Algorithms
                 nAction.InexactExpansion = true;
                 if (a.Observe != null)
                 {
-                    BeliefParticles PositiveNextParticleFilter = Node.ParticleFilter.Apply(a, a.Observe);
+                    BeliefParticles PositiveNextParticleFilter = new BeliefParticles();
                     nAction.AddObservationChild(null, a.Observe, PositiveNextParticleFilter);
 
-                    BeliefParticles NegativeNextParticleFilter = Node.ParticleFilter.Apply(a, a.Observe.Negate());
+                    BeliefParticles NegativeNextParticleFilter = new BeliefParticles();
                     nAction.AddObservationChild(null, a.Observe.Negate(), NegativeNextParticleFilter);
                 }
                 else
                 {
-                    BeliefParticles NextParticleFilter = Node.ParticleFilter.Apply(a, null);
+                    BeliefParticles NextParticleFilter = new BeliefParticles();
                     nAction.AddObservationChild(null, null, NextParticleFilter);
                 }
                 Node.AddActionPomcpNode(nAction);
@@ -644,7 +644,7 @@ namespace CPORLib.Algorithms
             {
                 Search(nCurrent, verbose);
 
-                //PrintTree(nCurrent, "", 0);
+                //PrintTree(nCurrent, "", 3);
 
                 Action bestValidAction = null;
                 double bestScore = Double.MinValue;
@@ -661,12 +661,7 @@ namespace CPORLib.Algorithms
                         bestActionNode = actionNode;
                     }
                 }
-                //BUGBUG;//problem - sometimes checking is the only child although there should be more children.
-                if (bestValidAction.Name == "checking" && Plan.Count > 0 && !Plan.Last().Name.StartsWith("move"))
-                {
-                    PrintTree(nCurrent, "", 0); 
-                    //Search(nCurrent, verbose);
-                }
+               
 
                 Plan.Add(bestValidAction);
 

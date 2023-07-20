@@ -232,6 +232,11 @@ namespace CPORLib.PlanningModel
 
         public State Apply(Action a)
         {
+            if(a.Original != null)
+            {
+                a = a.Original;
+            }
+
             //Debug.WriteLine("Executing " + a.Name);
             if (a is ParametrizedAction)
                 return null;

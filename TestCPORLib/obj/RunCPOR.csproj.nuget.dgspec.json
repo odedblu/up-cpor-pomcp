@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "D:\\OneDrive\\OneDrive - BGU\\Research\\projects\\AIPlan4EU\\up-cpor-pomcp\\TestCPORLib\\RunCPOR.csproj": {}
+    "C:\\Users\\odedblu\\source\\repos\\up-cpor-pomcp\\TestCPORLib\\RunCPOR.csproj": {}
   },
   "projects": {
-    "D:\\OneDrive\\OneDrive - BGU\\Research\\projects\\AIPlan4EU\\up-cpor-pomcp\\CPORLib\\CPORLib.csproj": {
+    "C:\\Users\\odedblu\\source\\repos\\up-cpor-pomcp\\CPORLib\\CPORLib.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\OneDrive\\OneDrive - BGU\\Research\\projects\\AIPlan4EU\\up-cpor-pomcp\\CPORLib\\CPORLib.csproj",
+        "projectUniqueName": "C:\\Users\\odedblu\\source\\repos\\up-cpor-pomcp\\CPORLib\\CPORLib.csproj",
         "projectName": "CPORLib",
-        "projectPath": "D:\\OneDrive\\OneDrive - BGU\\Research\\projects\\AIPlan4EU\\up-cpor-pomcp\\CPORLib\\CPORLib.csproj",
-        "packagesPath": "C:\\Users\\shanigu\\.nuget\\packages\\",
-        "outputPath": "D:\\OneDrive\\OneDrive - BGU\\Research\\projects\\AIPlan4EU\\up-cpor-pomcp\\CPORLib\\obj\\",
+        "projectPath": "C:\\Users\\odedblu\\source\\repos\\up-cpor-pomcp\\CPORLib\\CPORLib.csproj",
+        "packagesPath": "C:\\Users\\odedblu\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\odedblu\\source\\repos\\up-cpor-pomcp\\CPORLib\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\shanigu\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\odedblu\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -69,21 +69,21 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.203\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.401\\RuntimeIdentifierGraph.json"
         }
       }
     },
-    "D:\\OneDrive\\OneDrive - BGU\\Research\\projects\\AIPlan4EU\\up-cpor-pomcp\\TestCPORLib\\RunCPOR.csproj": {
+    "C:\\Users\\odedblu\\source\\repos\\up-cpor-pomcp\\TestCPORLib\\RunCPOR.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\OneDrive\\OneDrive - BGU\\Research\\projects\\AIPlan4EU\\up-cpor-pomcp\\TestCPORLib\\RunCPOR.csproj",
+        "projectUniqueName": "C:\\Users\\odedblu\\source\\repos\\up-cpor-pomcp\\TestCPORLib\\RunCPOR.csproj",
         "projectName": "RunCPOR",
-        "projectPath": "D:\\OneDrive\\OneDrive - BGU\\Research\\projects\\AIPlan4EU\\up-cpor-pomcp\\TestCPORLib\\RunCPOR.csproj",
-        "packagesPath": "C:\\Users\\shanigu\\.nuget\\packages\\",
-        "outputPath": "D:\\OneDrive\\OneDrive - BGU\\Research\\projects\\AIPlan4EU\\up-cpor-pomcp\\TestCPORLib\\obj\\",
+        "projectPath": "C:\\Users\\odedblu\\source\\repos\\up-cpor-pomcp\\TestCPORLib\\RunCPOR.csproj",
+        "packagesPath": "C:\\Users\\odedblu\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\odedblu\\source\\repos\\up-cpor-pomcp\\TestCPORLib\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\shanigu\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\odedblu\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -97,8 +97,8 @@
           "net6.0": {
             "targetAlias": "net6.0",
             "projectReferences": {
-              "D:\\OneDrive\\OneDrive - BGU\\Research\\projects\\AIPlan4EU\\up-cpor-pomcp\\CPORLib\\CPORLib.csproj": {
-                "projectPath": "D:\\OneDrive\\OneDrive - BGU\\Research\\projects\\AIPlan4EU\\up-cpor-pomcp\\CPORLib\\CPORLib.csproj"
+              "C:\\Users\\odedblu\\source\\repos\\up-cpor-pomcp\\CPORLib\\CPORLib.csproj": {
+                "projectPath": "C:\\Users\\odedblu\\source\\repos\\up-cpor-pomcp\\CPORLib\\CPORLib.csproj"
               }
             }
           }
@@ -142,7 +142,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.203\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.401\\RuntimeIdentifierGraph.json"
         }
       }
     }
