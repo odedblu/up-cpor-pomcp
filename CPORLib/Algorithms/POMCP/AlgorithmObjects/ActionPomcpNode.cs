@@ -22,6 +22,7 @@ namespace CPORLib.Algorithms
             VisitedCount = 0;
             Value = 0;
             Action = action;
+            IsGoalNode = false;
         }
 
         public ActionPomcpNode(ObservationPomcpNode ObservationParentNode, Action action)
@@ -31,6 +32,7 @@ namespace CPORLib.Algorithms
             VisitedCount = 0;
             Value = 0;
             Action = action;
+            IsGoalNode = false;
         }
 
 
@@ -41,6 +43,13 @@ namespace CPORLib.Algorithms
             ObservationPomcpNode nObservation = new ObservationPomcpNode(this, partiallySpecifiedState, particleFilter, fObservation);
             if (partiallySpecifiedState == null)
                 nObservation.InexactExpansion = true;
+            if (partiallySpecifiedState.IsGoalState())
+            {
+                nObservation.SelectionValue = 100;
+                nObservation.VisitedCount++;
+                nObservation.SelctionVisitedCount++;
+                nObservation.IsGoalNode = true;
+            }
             Children.Add(iHashCode, nObservation);
         }
 
@@ -89,7 +98,7 @@ namespace CPORLib.Algorithms
 
         public string ToString()
         {
-            return $"{Action.Name} | V={Value} | VC={VisitedCount}";
+            return $"{Action.Name} | V={Value} | VC={VisitedCount} | SV={SelectionValue} | SVC={SelctionVisitedCount}";
         }
     }
 }

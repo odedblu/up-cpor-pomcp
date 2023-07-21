@@ -37,13 +37,13 @@ namespace CPORLib.Algorithms
                     throw new ArgumentException("Try to select best action on observation pomcp node.");
                 }
                 double ChildrenUCBScore;
-                if (Children.VisitedCount == 0)
+                if (Children.VisitedCount == 1 || Children.VisitedCount == 0)
                 {
                     ChildrenUCBScore = double.MaxValue;
                 }
                 else
                 {
-                    ChildrenUCBScore = Children.Value + C * Math.Sqrt(Math.Log(SelectionNode.VisitedCount) / (double)Children.VisitedCount);
+                    ChildrenUCBScore = Children.SelectionValue + C * Math.Sqrt(Math.Log(SelectionNode.SelctionVisitedCount) / (double)Children.SelctionVisitedCount);
                 }
                 if (MaxUCBValue < ChildrenUCBScore) // && CurrentState.AvailableActions.Contains(((ActionPomcpNode)Children).Action))
                 {

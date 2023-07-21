@@ -28,6 +28,7 @@ namespace CPORLib.Algorithms
             ObservedPredicates = null;
             PartiallySpecifiedState = partiallySpecifiedState;
             Observation = observation;
+            IsGoalNode = false;
         }
 
         public ObservationPomcpNode(ActionPomcpNode ActionParentNode, List<Predicate> Observed, 
@@ -42,6 +43,8 @@ namespace CPORLib.Algorithms
             foreach (Predicate Predicate in Observed) 
                 ObservedPredicates.Add(Predicate);
             PartiallySpecifiedState = partiallySpecifiedState;
+            IsGoalNode = false;
+
 
         }
 
@@ -54,6 +57,8 @@ namespace CPORLib.Algorithms
             ParticleFilter = particleFilter;
             PartiallySpecifiedState = partiallySpecifiedState;
             Observation = observation;
+            IsGoalNode = false;
+
 
             //if (ID == 3256)
             //    Console.Write("*");

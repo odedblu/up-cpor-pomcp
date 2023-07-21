@@ -23,7 +23,7 @@
 (:action move-b-to-b
   :parameters (?bm ?bf ?bt - block)
   :precondition (and (clear ?bm) (clear ?bt) (on ?bm ?bf) (not (same ?bm ?bt)))
-  :effect (probabilistic 0.999 (and (not (clear ?bt)) (not (on ?bm ?bf))
+  :effect (probabilistic 0.3 (and (not (clear ?bt)) (not (on ?bm ?bf))
                (on ?bm ?bt) (clear ?bf))))
 
 (:action move-to-t

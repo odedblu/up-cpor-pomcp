@@ -216,8 +216,12 @@ namespace CPORLib.Algorithms
                         ExpandNode(Current);
                     bDone = true;
                 }
-                
 
+                if (Current.IsGoalNode)
+                {
+                    Current.SelctionVisitedCount++;
+                    return;
+                }
                 // Select next action to preform inside the tree.
                 Action NextAction = ActionSelectPolicy.SelectBestAction(Current, CurrentState);
 
@@ -334,6 +338,8 @@ namespace CPORLib.Algorithms
                 
             }
 
+            reCalculateScores(Node, DiscountFactor);
+
             /*
             // Start back propogation phase.
             //while (Current != Node && !Double.IsNaN(Reward))
@@ -407,6 +413,11 @@ namespace CPORLib.Algorithms
             //foreach (Action a in Node.PartiallySpecifiedState.AvailableActions)
 
             //BUGBUG;//do a full expansion during simulate, use only actions that are applicable to a given state, only for the root node check true applicability
+
+            if (Node.IsGoalNode)
+            {
+                return;
+            }
 
             Expansions++;
 
@@ -643,8 +654,7 @@ namespace CPORLib.Algorithms
             while (!CurrentState.IsGoalState())
             {
                 Search(nCurrent, verbose);
-                reCalculateScores(nCurrent, this.DiscountFactor);
-                PrintTree(nCurrent, "", 3);
+                //PrintTree(nCurrent, "", 0);
 
                 Action bestValidAction = null;
                 double bestScore = Double.MinValue;
@@ -654,10 +664,10 @@ namespace CPORLib.Algorithms
 
                     ActionPomcpNode actionNode = pn as ActionPomcpNode;
                     
-                    if (actionNode.Value > bestScore)
+                    if (actionNode.SelectionValue > bestScore)
                     {
                         bestValidAction = actionNode.Action;
-                        bestScore = actionNode.Value;
+                        bestScore = actionNode.SelectionValue;
                         bestActionNode = actionNode;
                     }
                 }
@@ -733,7 +743,7 @@ namespace CPORLib.Algorithms
             if(nCurrent is ActionPomcpNode apn)
             {
                 sPath += "," + apn.Action.Name;
-                Console.WriteLine(sPath + " - " + nCurrent.Value + ", " + nCurrent.VisitedCount);
+                Console.WriteLine(sPath + " - " + nCurrent.Value + ", " + nCurrent.VisitedCount + ", sv: " + nCurrent.SelectionValue + ", svc:" + nCurrent.SelctionVisitedCount);
            }
             if (iDepth == MaxInnerDepth)
             {
@@ -780,7 +790,7 @@ namespace CPORLib.Algorithms
             foreach(PomcpNode child in nCurrent.Children.Values)
             {
                 ActionPomcpNode actionChild = child as ActionPomcpNode;
-                Console.WriteLine($"Action: {actionChild.Action.Name}, Value: {actionChild.Value}, Visits: {actionChild.VisitedCount}.");
+                Console.WriteLine(actionChild.ToString());
             }
         }
 
@@ -813,31 +823,37 @@ namespace CPORLib.Algorithms
 
             if(Current is ObservationPomcpNode opn)
             {
+                if (opn.IsLeaf())
+                {
+                    return;
+                }
                 double maxValue = double.MinValue;
                 int maxValueVisits = 0;
                 foreach (PomcpNode apn in opn.Children.Values)
                 {
                     if (apn.Value > maxValue)
                     {
-                        maxValue = apn.Value;
-                        maxValueVisits = apn.VisitedCount;
+                        maxValue = apn.SelectionValue;
+                        maxValueVisits = apn.SelctionVisitedCount;
                     }
                 }
-                Current.Value = maxValue * discountFactor;
-                Current.VisitedCount = maxValueVisits;
+                Current.SelectionValue = maxValue * discountFactor -1;
+                Current.SelctionVisitedCount = maxValueVisits;
             }
             else if(Current is ActionPomcpNode apn2)
             {
                 bool AllChildrenLeafs = true;
                 foreach(PomcpNode opn2 in apn2.Children.Values)
                 {
-                    if (!opn2.IsLeaf())
+                    if (!opn2.IsLeaf() || opn2.IsGoalNode)
                     {
                         AllChildrenLeafs = false;
                     }
                 }
                 if(AllChildrenLeafs)
                 {
+                    apn2.SelectionValue = apn2.Value;
+                    apn2.SelctionVisitedCount = apn2.VisitedCount;
                     return;
                 }
                 else
@@ -846,13 +862,14 @@ namespace CPORLib.Algorithms
                     int totalVisitsCount = 0;
                     foreach(PomcpNode pn in apn2.Children.Values)
                     {
-                        totalVisitsCount += pn.VisitedCount;
+                        totalVisitsCount += pn.SelctionVisitedCount;
                     }
                     foreach (PomcpNode pn2 in apn2.Children.Values)
                     {
-                        ValueSum += pn2.VisitedCount * pn2.Value;
+                        ValueSum += pn2.SelctionVisitedCount * pn2.SelectionValue;
                     }
-                    Current.Value = ValueSum / totalVisitsCount;
+                    Current.SelectionValue = ValueSum / totalVisitsCount;
+                    Current.SelctionVisitedCount = totalVisitsCount;
                 }
 
             }

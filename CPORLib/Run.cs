@@ -81,7 +81,7 @@ namespace CPORLib
         public static void RunPOMCPPlanner(string sDomainFile, string sProblemFile, string sOutputFile, bool bOnline, bool bValidate = false)
         {
 
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < 2; i++)
             {
                 DateTime dtStart = DateTime.Now;
                 Debug.WriteLine("Reading domain and problem");
@@ -95,7 +95,7 @@ namespace CPORLib
                 double EXPLORATION_FACTOR_UCB = 150.0;
                 double DISCOUNT_FACTOR = 0.95;
                 double DEPTH_THRESHOLD = 0.55;
-                int SIMULATIONS = 1000;
+                int SIMULATIONS = 5000;
 
                 //IRolloutPolicy RolloutPolicy = new GuyHaddHeuristuc(domain, problem);
                 IRolloutPolicy RolloutPolicy = new SDRwithHAddHeuristic(domain, problem);

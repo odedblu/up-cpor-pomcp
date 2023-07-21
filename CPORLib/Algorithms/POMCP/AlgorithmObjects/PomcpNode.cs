@@ -16,6 +16,9 @@ namespace CPORLib.Algorithms
         public Dictionary<int, PomcpNode> Children;
         public int VisitedCount;
         public double Value;
+        public double SelectionValue { get; set; }
+        public int SelctionVisitedCount { get; set; }
+        public bool IsGoalNode { get; set; }
 
         public bool InexactExpansion { get; set; }
 

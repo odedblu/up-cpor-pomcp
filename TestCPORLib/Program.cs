@@ -28,59 +28,25 @@ public class Program
         gcmd_line.debug = 0;
 
 
-        RunTest("medpks010Uneven", bOnline);
+
+
+        // Regular problems solve:
+
+        //RunTest("blocks3", bOnline); //good
+        //RunTest("doors5", bOnline); //good
+        //RunTest("localize5", bOnline); //good
+        //RunTest("medpks010", bOnline); //good
+        //RunTest("wumpus05", bOnline); //good
 
 
         //Intersting problems:
 
-        //RunTest("doors5longshort", bOnline);
-        //RunTest("blocks3Hardb2b", bOnline);
+        //RunTest("doors5longshort", bOnline); //error
+        //RunTest("blocks3Hardb2b", bOnline); //good
+        //RunTest("localize5stay2", bOnline);
+        //RunTest("medpks010Uneven", bOnline); //parser problem
 
 
-        /* RunTest("localize5stay2", bOnline);
-           RunTest("wumpus05", bOnline);
-        RunTest("localize5", bOnline);
-
-        RunTest("blocks3", bOnline);
-
-
-
-
-         //RunTest("localize5noisy", bOnline);
-
-
-
-
-        RunTest("blocks3", bOnline);
-
-
-
-
-
-
-         RunTest("wumpus10", bOnline);
-
-         RunTest("medpks010", bOnline);
-
-
-
-
-
-         RunTest("colorballs2-2", bOnline);
-         RunTest("blocks2", bOnline);
-         RunTest("unix1", bOnline);
-
-
-         RunTest("doors15", bOnline);
-
-
-         RunTest("blocks2", bOnline);
-         //RunTest("wumpus05", bOnline);
-         //RunTest("medpks010", bOnline);
-         //RunTest("unix1", bOnline);
-         //RunTest("localize5", bOnline);
-         //RunTest("doors5", bOnline);
-         //RunTest("colorballs2-2", bOnline); */
     }
 
     public static void Main(string[] args)
