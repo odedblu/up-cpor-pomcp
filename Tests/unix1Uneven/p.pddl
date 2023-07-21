@@ -11,11 +11,10 @@
      (sub-dir sub2 sub22)
      (is-cur-dir root)
      
-     (oneof
-        (file-in-dir my-file sub11)
-        (file-in-dir my-file sub21)
-        (file-in-dir my-file sub12)
-        (file-in-dir my-file sub22))
+     (probabilistic 0.01 (file-in-dir my-file sub11)
+					0.49 (file-in-dir my-file sub21)
+					0.01 (file-in-dir my-file sub12)
+					0.49 (file-in-dir my-file sub22))
      )
    (:goal (file-in-dir my-file root))
 )

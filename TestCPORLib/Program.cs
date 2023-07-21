@@ -37,14 +37,20 @@ public class Program
         //RunTest("localize5", bOnline); //good
         //RunTest("medpks010", bOnline); //good
         //RunTest("wumpus05", bOnline); //good
+        //RunTest("unix1", bOnline); //good
+
 
 
         //Intersting problems:
 
-        //RunTest("doors5longshort", bOnline); //error
+        //RunTest("doors5longshort", bOnline); //good
         //RunTest("blocks3Hardb2b", bOnline); //good
-        //RunTest("localize5stay2", bOnline);
+        //RunTest("localize3leftbetter", bOnline); // error - found falsified original clause.
         //RunTest("medpks010Uneven", bOnline); //parser problem
+        //RunTest("wumpus05Uneven", bOnline); //parser problem
+        RunTest("unix1Uneven", bOnline); //parser problem
+
+
 
 
     }

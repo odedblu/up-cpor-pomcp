@@ -831,7 +831,7 @@ namespace CPORLib.Algorithms
                 int maxValueVisits = 0;
                 foreach (PomcpNode apn in opn.Children.Values)
                 {
-                    if (apn.Value > maxValue)
+                    if (apn.Value > maxValue && apn.SelctionVisitedCount != 0)
                     {
                         maxValue = apn.SelectionValue;
                         maxValueVisits = apn.SelctionVisitedCount;

@@ -23,6 +23,8 @@ namespace CPORLib.Algorithms
             Value = 0;
             Action = action;
             IsGoalNode = false;
+            SelectionValue = 0;
+            SelctionVisitedCount = 0;
         }
 
         public ActionPomcpNode(ObservationPomcpNode ObservationParentNode, Action action)
@@ -33,6 +35,8 @@ namespace CPORLib.Algorithms
             Value = 0;
             Action = action;
             IsGoalNode = false;
+            SelectionValue = 0;
+            SelctionVisitedCount = 0;
         }
 
 
