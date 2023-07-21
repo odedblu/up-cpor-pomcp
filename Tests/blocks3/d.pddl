@@ -10,6 +10,7 @@
 
   (:action senseON
    :parameters (?b1 ?b2 - block)
+   :precondition (and (not (same ?b1 ?b2)))
    :observe (on ?b1 ?b2))
 
   (:action senseCLEAR

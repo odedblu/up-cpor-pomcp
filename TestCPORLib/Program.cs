@@ -16,7 +16,7 @@ public class Program
         Run.RunPOMCPPlanner(sDomainFile
             , sProblemFile,
             sOutputFile,
-            bOnline, false);
+            bOnline, false, sName);
 
         DateTime dtEnd = DateTime.Now;
         Console.WriteLine("Time: " + (dtEnd - dtStart).TotalSeconds);
@@ -44,11 +44,11 @@ public class Program
         //Intersting problems:
 
         //RunTest("doors5longshort", bOnline); //good
-        //RunTest("blocks3Hardb2b", bOnline); //good
+        RunTest("blocks3Hardb2b", bOnline); //good
         //RunTest("localize3leftbetter", bOnline); // error - found falsified original clause.
         //RunTest("medpks010Uneven", bOnline); //parser problem
         //RunTest("wumpus05Uneven", bOnline); //parser problem
-        RunTest("unix1Uneven", bOnline); //parser problem
+        //RunTest("unix1Uneven", bOnline); //parser problem
 
 
 

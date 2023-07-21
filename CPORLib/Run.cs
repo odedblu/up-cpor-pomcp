@@ -78,27 +78,34 @@ namespace CPORLib
 
         }
         //Create run POMCP similar to RunPlanner here.
-        public static void RunPOMCPPlanner(string sDomainFile, string sProblemFile, string sOutputFile, bool bOnline, bool bValidate = false)
+        public static void RunPOMCPPlanner(string sDomainFile, string sProblemFile, string sOutputFile, bool bOnline, bool bValidate = false, string name="")
         {
-
-            for (int i = 0; i < 2; i++)
+            int NumOfRuns = 20;
+            Console.WriteLine($"Running {name}:");
+            Console.WriteLine("----------------------");
+            double averageTimeInSeconds = 0;
+            double averageStepsToGoal = 0;
+            int numberOfSuccesRuns = 0;
+            for (int i = 0; i < NumOfRuns; i++)
             {
                 DateTime dtStart = DateTime.Now;
-                Debug.WriteLine("Reading domain and problem");
+                //Debug.WriteLine("Reading domain and problem");
                 Parser parser = new Parser();
                 Domain domain = parser.ParseDomain(sDomainFile);
                 Problem problem = parser.ParseProblem(sProblemFile, domain);
-                Debug.WriteLine("Done reading domain and problem");
+                //Debug.WriteLine("Done reading domain and problem");
 
 
 
                 double EXPLORATION_FACTOR_UCB = 150.0;
                 double DISCOUNT_FACTOR = 0.95;
                 double DEPTH_THRESHOLD = 0.55;
-                int SIMULATIONS = 5000;
+                int SIMULATIONS = 500;
 
+                IRolloutPolicy RolloutPolicy = new RandomRolloutPolicy();
                 //IRolloutPolicy RolloutPolicy = new GuyHaddHeuristuc(domain, problem);
-                IRolloutPolicy RolloutPolicy = new SDRwithHAddHeuristic(domain, problem);
+                //IRolloutPolicy RolloutPolicy = new SDRwithHAddHeuristic(domain, problem);
+
 
                 IActionSelectPolicy ActionSelectPolicy = new UCBValueActionSelectPolicy(EXPLORATION_FACTOR_UCB);
                 IActionSelectPolicy FinalActionSelectPolicy = new MaxValueActionSelectPolicy();
@@ -107,17 +114,40 @@ namespace CPORLib
 
                 //ObservationPomcpNode root = new ObservationPomcpNode(new PartiallySpecifiedState(problem.GetInitialBelief()), null);
                 PomcpAlgorithm pomcpAlgorithm = new PomcpAlgorithm(DISCOUNT_FACTOR, DEPTH_THRESHOLD, SIMULATIONS, problem, FinalActionSelectPolicy, ActionSelectPolicy, RolloutPolicy, RewardFunctions.GeneralReward);
-                List<PlanningAction> plan = pomcpAlgorithm.FindPlan(true);
-
-                Console.WriteLine("\n\nGoal reached. Plan:");
-                foreach (PlanningAction action in plan)
+                try
                 {
-                    Console.WriteLine(action.Name);
+                    List<PlanningAction> plan = pomcpAlgorithm.FindPlan(false);
+                    averageStepsToGoal += plan.Count;
+                    if (plan.Count < 100)
+                    {
+                        numberOfSuccesRuns++;
+                    }
+                    TimeSpan tsTime = (DateTime.Now - dtStart);
+                    averageTimeInSeconds += Math.Round(tsTime.TotalSeconds, 4);
+                    Console.WriteLine("\n\nGoal reached. Plan:");
+                    foreach (PlanningAction action in plan)
+                    {
+                        Console.WriteLine(action.Name);
+                    }
                 }
-                TimeSpan tsTime = (DateTime.Now - dtStart);
-                Console.WriteLine("Time: " + Math.Round(tsTime.TotalSeconds, 4));
-                Console.WriteLine("************************************************\n\n");
+                catch
+                {
+
+                }
+                
+                
+                
+                
+                //averageTimeInSeconds += Math.Round(tsTime.TotalSeconds, 4);
+                /* Console.WriteLine("Time: " + Math.Round(tsTime.TotalSeconds, 4));
+                 Console.WriteLine("************************************************\n\n");*/
             }
+            Console.WriteLine($"average time = {averageTimeInSeconds/ (double)numberOfSuccesRuns}.");
+            Console.WriteLine($"average steps = {averageStepsToGoal / numberOfSuccesRuns}.");
+            Console.WriteLine($"Success rate = {((double)numberOfSuccesRuns * 100) / NumOfRuns}%.");
+
+
+
         }
 
         public static void RunPlanner(string sDomainFile, string sProblemFile, string sOutputFile, bool bOnline, bool bValidate = false)

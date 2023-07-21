@@ -639,6 +639,7 @@ namespace CPORLib.Algorithms
 
         public List<Action> FindPlan(bool verbose=false)
         {
+            int MaxStepsAllowed = 100;
             List<Action> Plan = new List<Action>();
             // State CurrentState = Problem.GetInitialBelief().ChooseState(true);
             PartiallySpecifiedState CurrentState = Root.PartiallySpecifiedState.Clone();
@@ -651,7 +652,7 @@ namespace CPORLib.Algorithms
             int iStep = 0;
 
             ExpandNode(Root);
-            while (!CurrentState.IsGoalState())
+            while (!CurrentState.IsGoalState() && iStep < MaxStepsAllowed)
             {
                 Search(nCurrent, verbose);
                 //PrintTree(nCurrent, "", 0);
