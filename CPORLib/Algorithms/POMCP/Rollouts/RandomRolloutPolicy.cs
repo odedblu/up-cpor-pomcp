@@ -15,7 +15,14 @@ namespace CPORLib.Algorithms
         public (Action,State) ChooseAction(State s)
         {
             if(s.AvailableActions.Count() == 0)  s.GroundAllActions();
-            List<Action> PossibleActions = s.AvailableActions;
+            List<Action> PossibleActions = new List<PlanningAction>();
+            foreach (PlanningAction action in s.AvailableActions)
+            {
+                if (action.Preconditions == null || action.Preconditions.IsTrue(s.Predicates, false))
+                {
+                    PossibleActions.Add(action);
+                }
+            }
             int SelectedIndex = RandomGenerator.Next(PossibleActions.Count);
             return (PossibleActions[SelectedIndex], null);
         }

@@ -2671,8 +2671,8 @@ namespace CPORLib.PlanningModel
 
                     foreach (GroundedPredicate gpMatch in lMatches)
                     {
-                        if (gpMatch.ToString().Contains("5-3"))
-                            Console.Write("*");
+                        /*if (gpMatch.ToString().Contains("5-3"))
+                            Console.Write("*");*/
                         Dictionary<Parameter, Constant> dNewBinding = pCurrent.Match(gpMatch, dBinding, this);
                         if (dNewBinding != null)
                         {

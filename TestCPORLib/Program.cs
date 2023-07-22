@@ -43,8 +43,8 @@ public class Program
 
         //Intersting problems:
 
-        //RunTest("doors5longshort", bOnline); //good
-        RunTest("blocks3Hardb2b", bOnline); //good
+        //RunTest("doors5longshort", bOnline); // stuck on generting new state from belife state
+        //RunTest("blocks3Hardb2b", bOnline); //good
         //RunTest("localize3leftbetter", bOnline); // error - found falsified original clause.
         //RunTest("medpks010Uneven", bOnline); //parser problem
         //RunTest("wumpus05Uneven", bOnline); //parser problem

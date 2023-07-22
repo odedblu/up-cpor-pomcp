@@ -19,7 +19,7 @@
 	(:action try-open-door
       :parameters (?i - pos ?j - pos )
       :precondition (and (adj ?i ?j) (at ?i) (problematic ?j))
-      :effect  (probabilistic 0.1 (and (opened ?j))))
+      :effect  (probabilistic 0.7 (and (opened ?j))))
 	 )
 )
 
