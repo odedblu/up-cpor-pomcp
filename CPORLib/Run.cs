@@ -100,10 +100,10 @@ namespace CPORLib
                 double EXPLORATION_FACTOR_UCB = 150.0;
                 double DISCOUNT_FACTOR = 0.95;
                 double DEPTH_THRESHOLD = 0.55;
-                int SIMULATIONS = 500;
+                int SIMULATIONS = 1500;
 
-                IRolloutPolicy RolloutPolicy = new RandomRolloutPolicy();
-                //IRolloutPolicy RolloutPolicy = new GuyHaddHeuristuc(domain, problem);
+                //IRolloutPolicy RolloutPolicy = new RandomRolloutPolicy();
+                IRolloutPolicy RolloutPolicy = new GuyHaddHeuristuc(domain, problem);
                 //IRolloutPolicy RolloutPolicy = new SDRwithHAddHeuristic(domain, problem);
 
 

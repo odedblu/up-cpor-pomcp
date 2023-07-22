@@ -32,7 +32,7 @@ public class Program
 
         // Regular problems solve:
 
-        //RunTest("blocks3", bOnline); //good
+        RunTest("blocks7", bOnline); //good
         //RunTest("doors5", bOnline); //good
         //RunTest("localize5", bOnline); //good
         //RunTest("medpks010", bOnline); //good
