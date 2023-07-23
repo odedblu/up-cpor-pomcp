@@ -32,7 +32,7 @@ public class Program
 
         // Regular problems solve:
 
-        RunTest("blocks7", bOnline); //good
+        //RunTest("blocks7", bOnline); //good
         //RunTest("doors5", bOnline); //good
         //RunTest("localize5", bOnline); //good
         //RunTest("medpks010", bOnline); //good
@@ -43,7 +43,7 @@ public class Program
 
         //Intersting problems:
 
-        //RunTest("doors5longshort", bOnline); // stuck on generting new state from belife state
+        RunTest("doors5longshort", bOnline); // stuck on generting new state from belife state
         //RunTest("blocks3Hardb2b", bOnline); //good
         //RunTest("localize3leftbetter", bOnline); // error - found falsified original clause.
         //RunTest("medpks010Uneven", bOnline); //parser problem

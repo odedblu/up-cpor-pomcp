@@ -60,7 +60,6 @@ namespace CPORLib.Algorithms
             Options.ComputeCompletePlanTree = true;
         }
 
-       
 
         public void Search(ObservationPomcpNode nCurrent, bool verbose=false)
         {
@@ -86,6 +85,8 @@ namespace CPORLib.Algorithms
 
                 for (int i = 0; i < 500; i++)
                 {
+                    
+
                     State s = nCurrent.PartiallySpecifiedState.m_bsInitialBelief.ChooseState(true, true);
                     bool bValid = true;
                     for(int j =  lActions.Count - 1; j >= 0; j--)
@@ -229,7 +230,10 @@ namespace CPORLib.Algorithms
                 State NextState = CurrentState.Apply(NextAction);
                 if (NextState == null)
                 {
-                    Console.WriteLine("*");
+                    //we might get here because this state was created before the option predicates were added
+                    //hence, this state makes wrong decisions with respect to the observed results of probabilistic actions.
+                    //we can just ignore the simulation here, or remove the state from the particle filter. Ignoring for now.
+                    //Console.WriteLine("*");
                     return;
                 }
                 
