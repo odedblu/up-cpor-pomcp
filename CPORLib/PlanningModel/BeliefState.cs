@@ -829,8 +829,6 @@ namespace CPORLib.PlanningModel
                 cfOr.SimpleAddOperand(p.Negate());
                 AddInitialStateFormula(cfOr);
             }
-
-            
         }
 
         

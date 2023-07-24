@@ -135,6 +135,7 @@ namespace CPORLib.Algorithms
                 }
                 Simulate(nCurrent);
             }
+            PrintProgressBar(100);
             if (verbose) {
                 Console.WriteLine("Done simulations.");
                 PrintActionLayer(nCurrent);

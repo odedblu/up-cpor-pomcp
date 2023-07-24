@@ -126,6 +126,8 @@ namespace CPORLib.PlanningModel
             ISet<Predicate> lUnknown = new HashSet<Predicate>();
             foreach (Formula f in m_lHiddenFormulas)
                 f.GetAllPredicates(lUnknown);
+            foreach(Formula f in m_lProbabilisticFormulas)
+                f.GetAllPredicates(lUnknown);
             foreach (GroundedPredicate gp in lGrounded)
             {
                 if (!(Domain.AlwaysConstant(gp) && Domain.AlwaysKnown(gp))) //not sure why I thouhgt that constant predicates do not apply here. We need them for planning in K domain.

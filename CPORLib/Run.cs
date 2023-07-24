@@ -103,8 +103,8 @@ namespace CPORLib
                 int SIMULATIONS = 1500;
 
                 //IRolloutPolicy RolloutPolicy = new RandomRolloutPolicy();
-                IRolloutPolicy RolloutPolicy = new GuyHaddHeuristuc(domain, problem);
-                //IRolloutPolicy RolloutPolicy = new SDRwithHAddHeuristic(domain, problem);
+                //IRolloutPolicy RolloutPolicy = new GuyHaddHeuristuc(domain, problem);
+                IRolloutPolicy RolloutPolicy = new SDRwithHAddHeuristic(domain, problem);
 
 
                 IActionSelectPolicy ActionSelectPolicy = new UCBValueActionSelectPolicy(EXPLORATION_FACTOR_UCB);
@@ -116,7 +116,7 @@ namespace CPORLib
                 PomcpAlgorithm pomcpAlgorithm = new PomcpAlgorithm(DISCOUNT_FACTOR, DEPTH_THRESHOLD, SIMULATIONS, problem, FinalActionSelectPolicy, ActionSelectPolicy, RolloutPolicy, RewardFunctions.GeneralReward);
                 try
                 {
-                    List<PlanningAction> plan = pomcpAlgorithm.FindPlan(false);
+                    List<PlanningAction> plan = pomcpAlgorithm.FindPlan(true);
                     averageStepsToGoal += plan.Count;
                     if (plan.Count < 100)
                     {
