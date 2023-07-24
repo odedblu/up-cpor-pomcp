@@ -22,6 +22,7 @@ namespace CPORLib.PlanningModel
 
 
         public IEnumerable<CompoundFormula> HiddenFormulas { get { return m_lHiddenFormulas; } }
+        public IEnumerable<ProbabilisticFormula> ProbabilisticFormulas { get { return m_lProbabilisticFormulas; } }
         public ISet<Predicate> Known { get { return m_lKnown; } }
         public ISet<Predicate> Unknown { get { return m_lInitiallyUnknown; } }
         public List<PlanningAction> ReasoningActions { get; private set; }

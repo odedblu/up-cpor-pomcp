@@ -2294,7 +2294,11 @@ namespace CPORLib.PlanningModel
                 lPredicates.Add(p);
                 lInitiallyKnownPredicates.Add(p);
             }
-            foreach (CompoundFormula cf in problem.HiddenFormulas)
+            foreach (Formula cf in problem.HiddenFormulas)
+            {
+                cf.GetAllPredicates(lPredicates);
+            }
+            foreach (Formula cf in problem.ProbabilisticFormulas)
             {
                 cf.GetAllPredicates(lPredicates);
             }

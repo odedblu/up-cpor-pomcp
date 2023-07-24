@@ -136,6 +136,7 @@ namespace CPORLib.Algorithms
                 Simulate(nCurrent);
             }
             PrintProgressBar(100);
+            reCalculateScores(nCurrent, DiscountFactor);
             if (verbose) {
                 Console.WriteLine("Done simulations.");
                 PrintActionLayer(nCurrent);
@@ -222,6 +223,7 @@ namespace CPORLib.Algorithms
                 if (Current.IsGoalNode)
                 {
                     Current.SelctionVisitedCount++;
+                    Current.ParticleFilter.AddState(CurrentState);
                     return;
                 }
                 // Select next action to preform inside the tree.
@@ -244,7 +246,9 @@ namespace CPORLib.Algorithms
                 if (NextAction.Observe != null)
                 {
                     if (NextAction.Observe.IsTrue(NextState.Predicates, false))
+                    {
                         observation = NextAction.Observe;
+                    }
                     else
                         observation = NextAction.Observe.Negate();
                     //PredicatsObservation = observation.GetAllPredicates().ToList();
@@ -749,7 +753,8 @@ namespace CPORLib.Algorithms
             if(nCurrent is ActionPomcpNode apn)
             {
                 sPath += "," + apn.Action.Name;
-                Console.WriteLine(sPath + " - " + nCurrent.Value + ", " + nCurrent.VisitedCount + ", sv: " + nCurrent.SelectionValue + ", svc:" + nCurrent.SelctionVisitedCount);
+                Console.WriteLine(sPath + " - " + Math.Round(nCurrent.Value,3) + ", " + nCurrent.VisitedCount + ", sv: " +
+                    Math.Round(nCurrent.SelectionValue, 3) + ", svc:" + nCurrent.SelctionVisitedCount);
            }
             if (iDepth == MaxInnerDepth)
             {
@@ -819,7 +824,7 @@ namespace CPORLib.Algorithms
 
 
 
-        private static void reCalculateScores(PomcpNode Current, double discountFactor)
+        private void reCalculateScores(PomcpNode Current, double discountFactor)
         {
 
             foreach(PomcpNode child in Current.Children.Values)
@@ -827,57 +832,56 @@ namespace CPORLib.Algorithms
                 reCalculateScores(child, discountFactor);
             }
 
-            if(Current is ObservationPomcpNode opn)
+            if (Current is ObservationPomcpNode opn)
             {
+                if (opn.IsGoalNode)
+                {
+                    opn.SelectionValue = 100; //should somehow get from the reward function...
+                    if (opn.SelctionVisitedCount == 0)
+                    {
+                        opn.SelctionVisitedCount = 1;
+                    }
+
+                    return;
+                }
                 if (opn.IsLeaf())
                 {
+                    if (opn.VisitedCount > 0)
+                    {
+                        opn.SelctionVisitedCount = opn.VisitedCount;
+                        Current.SelectionValue = opn.RolloutSum / opn.VisitedCount;
+                    }
                     return;
                 }
                 double maxValue = double.MinValue;
                 int maxValueVisits = 0;
                 foreach (PomcpNode apn in opn.Children.Values)
                 {
-                    if (apn.Value > maxValue && apn.SelctionVisitedCount != 0)
+                    if (apn.SelectionValue > maxValue && apn.SelctionVisitedCount != 0)
                     {
                         maxValue = apn.SelectionValue;
                         maxValueVisits = apn.SelctionVisitedCount;
                     }
                 }
-                Current.SelectionValue = maxValue * discountFactor -1;
+                Current.SelectionValue = maxValue * discountFactor - 1;
                 Current.SelctionVisitedCount = maxValueVisits;
             }
-            else if(Current is ActionPomcpNode apn2)
+            else if (Current is ActionPomcpNode apn)
             {
-                bool AllChildrenLeafs = true;
-                foreach(PomcpNode opn2 in apn2.Children.Values)
+                double ValueSum = 0;
+                int totalVisitsCount = 0;
+                foreach (PomcpNode opn2 in apn.Children.Values)
                 {
-                    if (!opn2.IsLeaf() || opn2.IsGoalNode)
-                    {
-                        AllChildrenLeafs = false;
-                    }
-                }
-                if(AllChildrenLeafs)
-                {
-                    apn2.SelectionValue = apn2.Value;
-                    apn2.SelctionVisitedCount = apn2.VisitedCount;
-                    return;
-                }
-                else
-                {
-                    double ValueSum = 0;
-                    int totalVisitsCount = 0;
-                    foreach(PomcpNode pn in apn2.Children.Values)
-                    {
-                        totalVisitsCount += pn.SelctionVisitedCount;
-                    }
-                    foreach (PomcpNode pn2 in apn2.Children.Values)
-                    {
-                        ValueSum += pn2.SelctionVisitedCount * pn2.SelectionValue;
-                    }
-                    Current.SelectionValue = ValueSum / totalVisitsCount;
-                    Current.SelctionVisitedCount = totalVisitsCount;
-                }
 
+                    if (opn2.SelctionVisitedCount > 0)
+                    {
+                        totalVisitsCount += opn2.SelctionVisitedCount;
+
+                        ValueSum += opn2.SelctionVisitedCount * opn2.SelectionValue;
+                    }
+                }
+                Current.SelectionValue = ValueSum / totalVisitsCount;
+                Current.SelctionVisitedCount = totalVisitsCount;
             }
         }
     }
