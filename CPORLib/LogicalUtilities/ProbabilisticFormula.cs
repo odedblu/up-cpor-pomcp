@@ -276,6 +276,7 @@ namespace CPORLib.LogicalUtilities
             double dRand = RandomGenerator.NextDouble();
             double dInitialRand = dRand;
             int iOption = 0, iChosenOption = -1;
+            ISet<Predicate> choosenPredicates = null;
             for( iOption = 0; iOption < Options.Count;iOption++)
             {
                 dRand -= Probabilities[iOption];
@@ -285,18 +286,25 @@ namespace CPORLib.LogicalUtilities
                 if (dRand < 0.01)
                 {
                     iChosenOption = iOption;
+                    break;
                 }
 
-                foreach (Predicate p in lPredicates)
-                {
-                    if (iOption == iChosenOption)
-                        lAssignment.Add(p);
-                    else
-                        lAssignment.Add(p.Negate());
-                }
+               
                 
             }
-            
+            for(iOption = 0; iOption < Options.Count; iOption++)
+            {
+                ISet<Predicate> lPredicates = Options[iOption].GetAllPredicates();
+                if (iOption == iChosenOption)
+                {
+                    foreach(Predicate pred in lPredicates) lAssignment.Add(pred);
+                }
+
+                else
+                {
+                    foreach (Predicate pred in lPredicates) lAssignment.Add(pred.Negate());
+                }
+            }
             return iChosenOption;
         }
     }
