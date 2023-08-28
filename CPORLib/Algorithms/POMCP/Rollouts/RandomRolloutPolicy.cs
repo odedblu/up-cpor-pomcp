@@ -31,5 +31,10 @@ namespace CPORLib.Algorithms
         {
             throw new NotImplementedException();
         }
+
+        public string Name()
+        {
+            return "Random";
+        }
     }
 }

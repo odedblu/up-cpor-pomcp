@@ -15,6 +15,10 @@ namespace CPORLib.Algorithms
 {
     internal class HAddRolloutPolicy : IRolloutPolicy
     {
+        public string Name()
+        {
+            return "HAdd2";
+        }
         public Dictionary<HashSet<Predicate>, List<Action>> DomainAvailableActionsCache { get; set; }
         public Dictionary<Tuple<int, int>, HashSet<Predicate>> NextLevelHAddCache { get; set; }
 

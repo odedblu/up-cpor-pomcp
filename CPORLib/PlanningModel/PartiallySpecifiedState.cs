@@ -2071,7 +2071,7 @@ namespace CPORLib.PlanningModel
         {
             if (m_sToString == null)
             {
-                foreach (Predicate p in Observed)
+                foreach (Predicate p in m_lObserved)
                 {
                     if (p.Name == "at" && !p.Negation)
                     {

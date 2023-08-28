@@ -9,8 +9,14 @@ using static CPORLib.Tools.Options;
 
 namespace CPORLib.Algorithms
 {
-    internal class ParticelAverageHAddPolicy : IRolloutPolicy
+    internal class ParticleAverageHAddPolicy : IRolloutPolicy
     {
+
+        public string Name()
+        {
+            return "ParticleAverageHAdd";
+        }
+
         public GuyHaddHeuristuc rolloutPolicy { get; set; }
         public BeliefParticles currentParticle { get; set; }
 
@@ -18,7 +24,7 @@ namespace CPORLib.Algorithms
 
 
 
-        public ParticelAverageHAddPolicy(Domain d, Problem p)
+        public ParticleAverageHAddPolicy(Domain d, Problem p)
         {
             rolloutPolicy = new GuyHaddHeuristuc(d, p);
             rolloutPolicy.Init();

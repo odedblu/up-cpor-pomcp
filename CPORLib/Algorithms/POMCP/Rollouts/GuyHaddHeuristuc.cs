@@ -12,6 +12,13 @@ namespace CPORLib.Algorithms
 {
     internal class GuyHaddHeuristuc: IRolloutPolicy
     {
+
+
+        public virtual string Name()
+        {
+            return "HAdd";
+        }
+
         public ISet<Predicate> AlwaysConstant;
 
         public List<Action> AllGroundedActions;

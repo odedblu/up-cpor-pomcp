@@ -12,6 +12,12 @@ namespace CPORLib.Algorithms
 {
     internal class GoalPredicateAddRolloutPolicy : IRolloutPolicy
     {
+
+        public string Name()
+        {
+            return "GoalPredicateAdd";
+        }
+
         public Action ChooseAction(State s)
         {
             Dictionary<Action, int> ActionScores = new Dictionary<Action, int>();

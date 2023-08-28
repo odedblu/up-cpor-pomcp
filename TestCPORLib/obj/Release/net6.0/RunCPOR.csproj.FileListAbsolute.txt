@@ -63,3 +63,8 @@ C:\Users\odedblu\source\repos\up-cpor-pomcp\TestCPORLib\obj\Release\net6.0\refin
 C:\Users\odedblu\source\repos\up-cpor-pomcp\TestCPORLib\obj\Release\net6.0\RunCPOR.pdb
 C:\Users\odedblu\source\repos\up-cpor-pomcp\TestCPORLib\obj\Release\net6.0\RunCPOR.genruntimeconfig.cache
 C:\Users\odedblu\source\repos\up-cpor-pomcp\TestCPORLib\obj\Release\net6.0\ref\RunCPOR.dll
+D:\OneDrive\OneDrive - BGU\Research\projects\AIPlan4EU\up-cpor-pomcp\TestCPORLib\bin\Release\net6.0\CaDiCaL.dll
+D:\OneDrive\OneDrive - BGU\Research\projects\AIPlan4EU\up-cpor-pomcp\TestCPORLib\bin\Release\net6.0\YalSAT.dll
+D:\OneDrive\OneDrive - BGU\Research\projects\AIPlan4EU\up-cpor-pomcp\TestCPORLib\bin\Release\net6.0\cryptominisat5win.dll
+D:\OneDrive\OneDrive - BGU\Research\projects\AIPlan4EU\up-cpor-pomcp\TestCPORLib\bin\Release\net6.0\kissat.dll
+D:\OneDrive\OneDrive - BGU\Research\projects\AIPlan4EU\up-cpor-pomcp\TestCPORLib\bin\Release\net6.0\SATInterface.dll

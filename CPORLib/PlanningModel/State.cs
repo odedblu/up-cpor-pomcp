@@ -529,13 +529,15 @@ namespace CPORLib.PlanningModel
         {
             if (m_sToString != null)
                 return m_sToString;
-            foreach (Predicate p in Predicates)
-                if (p.Name == "at" && !p.Negation)
-                {
-                    m_sToString = p.ToString();
-                    return m_sToString;
-                }
             m_sToString = "";
+            foreach (Predicate p in m_lChangingPredicates)
+            {
+                m_sToString += p + ",";
+            }
+            foreach (Predicate p in m_lFixedAndHidden)
+            {
+                m_sToString += p + ",";
+            }
             return m_sToString;
         }
 

@@ -13,6 +13,11 @@ namespace CPORLib.Algorithms
 {
     internal class SDRwithHAddHeuristic : GuyHaddHeuristuc
     {
+        public override string Name()
+        {
+            return "SDR";
+        }
+
 
         protected Dictionary<State, Dictionary<ISet<State>,double>> HeuristicsCache;
 

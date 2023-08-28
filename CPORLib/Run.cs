@@ -6,6 +6,8 @@ using CPORLib.Tools;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Numerics;
 using System.Text;
 
 namespace CPORLib
@@ -63,13 +65,13 @@ namespace CPORLib
 
             double dSum = 0.0;
 
-            for(int i = 0; i < cExecutions; i++)
+            for (int i = 0; i < cExecutions; i++)
             {
                 State s = states[i];
                 double cost = h.ComputeHAdd(s);
                 dSum += cost;
                 //if (i % 100 == 0)
-                  //  Console.Write("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" + i + "/" + cExecutions);
+                //  Console.Write("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" + i + "/" + cExecutions);
             }
 
             DateTime dtEnd = DateTime.Now;
@@ -78,7 +80,7 @@ namespace CPORLib
 
         }
         //Create run POMCP similar to RunPlanner here.
-        public static void RunPOMCPPlanner(string sDomainFile, string sProblemFile, string sOutputFile, bool bOnline, bool bValidate = false, string name="")
+        public static void RunPOMCPPlanner(string sDomainFile, string sProblemFile, string sOutputFile, bool bOnline, bool bValidate = false, string name = "")
         {
             int NumOfRuns = 20;
             Console.WriteLine($"Running {name}:");
@@ -86,68 +88,106 @@ namespace CPORLib
             double averageTimeInSeconds = 0;
             double averageStepsToGoal = 0;
             int numberOfSuccesRuns = 0;
-            for (int i = 0; i < NumOfRuns; i++)
+            Parser parser = new Parser();
+            string sName = "";
+
+            double EXPLORATION_FACTOR_UCB = 150.0;
+            double DISCOUNT_FACTOR = 0.95;
+            double DEPTH_THRESHOLD = 0.55;
+            int SIMULATIONS = 1000;
+            int MaxInnerDepth = 5;
+            int MaxOuterDepth = 50;
+
+            string[] aPloicies = new string[] { "Random", "HADD", "SDR" };
+
+
+            for (int iMaxDepth = 2; iMaxDepth < 5; iMaxDepth++)
             {
-                DateTime dtStart = DateTime.Now;
-                //Debug.WriteLine("Reading domain and problem");
-                Parser parser = new Parser();
-                Domain domain = parser.ParseDomain(sDomainFile);
-                Problem problem = parser.ParseProblem(sProblemFile, domain);
-                //Debug.WriteLine("Done reading domain and problem");
 
 
 
-                double EXPLORATION_FACTOR_UCB = 150.0;
-                double DISCOUNT_FACTOR = 0.95;
-                double DEPTH_THRESHOLD = 0.55;
-                int SIMULATIONS = 1500;
-
-                //IRolloutPolicy RolloutPolicy = new RandomRolloutPolicy();
-                //IRolloutPolicy RolloutPolicy = new GuyHaddHeuristuc(domain, problem);
-                IRolloutPolicy RolloutPolicy = new SDRwithHAddHeuristic(domain, problem);
-
-
-                IActionSelectPolicy ActionSelectPolicy = new UCBValueActionSelectPolicy(EXPLORATION_FACTOR_UCB);
-                IActionSelectPolicy FinalActionSelectPolicy = new MaxValueActionSelectPolicy();
-
-
-
-                //ObservationPomcpNode root = new ObservationPomcpNode(new PartiallySpecifiedState(problem.GetInitialBelief()), null);
-                PomcpAlgorithm pomcpAlgorithm = new PomcpAlgorithm(DISCOUNT_FACTOR, DEPTH_THRESHOLD, SIMULATIONS, problem, FinalActionSelectPolicy, ActionSelectPolicy, RolloutPolicy, RewardFunctions.GeneralReward);
-                try
-                {
-                    List<PlanningAction> plan = pomcpAlgorithm.FindPlan(true);
-                    averageStepsToGoal += plan.Count;
-                    if (plan.Count < 100)
-                    {
-                        numberOfSuccesRuns++;
-                    }
-                    TimeSpan tsTime = (DateTime.Now - dtStart);
-                    averageTimeInSeconds += Math.Round(tsTime.TotalSeconds, 4);
-                    Console.WriteLine("\n\nGoal reached. Plan:");
-                    foreach (PlanningAction action in plan)
-                    {
-                        Console.WriteLine(action.Name);
-                    }
-                }
-                catch
+                foreach (string sPolicy in aPloicies)
                 {
 
+                    for (int i = 0; i < NumOfRuns; i++)
+                    {
+                        //Debug.WriteLine("Reading domain and problem");
+                        Domain domain = parser.ParseDomain(sDomainFile);
+                        Problem problem = parser.ParseProblem(sProblemFile, domain);
+
+
+                        sName = problem.Name;
+                        //Debug.WriteLine("Done reading domain and problem");
+
+
+                        IRolloutPolicy RolloutPolicy = null;
+                        if (sPolicy == "Random")
+                            RolloutPolicy = new RandomRolloutPolicy();
+                        if (sPolicy == "HADD")
+                            RolloutPolicy = new GuyHaddHeuristuc(domain, problem);
+                        if (sPolicy == "SDR")
+                            RolloutPolicy = new SDRwithHAddHeuristic(domain, problem);
+
+
+                        IActionSelectPolicy ActionSelectPolicy = new UCBValueActionSelectPolicy(EXPLORATION_FACTOR_UCB);
+                        IActionSelectPolicy FinalActionSelectPolicy = new MaxValueActionSelectPolicy();
+
+
+
+                        //ObservationPomcpNode root = new ObservationPomcpNode(new PartiallySpecifiedState(problem.GetInitialBelief()), null);
+                        PomcpAlgorithm pomcpAlgorithm = new PomcpAlgorithm(DISCOUNT_FACTOR, DEPTH_THRESHOLD, SIMULATIONS, problem, FinalActionSelectPolicy, ActionSelectPolicy, RolloutPolicy, RewardFunctions.GeneralReward);
+                        pomcpAlgorithm.MaxInnerDepth = iMaxDepth;
+                        pomcpAlgorithm.MaxOuterDepth = MaxOuterDepth;
+
+
+                        RandomGenerator.Init(i * 1111);
+
+                        DateTime dtStart = DateTime.Now;
+                        try
+                        {
+                            List<PlanningAction> plan = pomcpAlgorithm.FindPlan(true);
+                            averageStepsToGoal += plan.Count;
+                            if (plan.Count < 100)
+                            {
+                                numberOfSuccesRuns++;
+                            }
+                            TimeSpan tsTime = (DateTime.Now - dtStart);
+                            averageTimeInSeconds += Math.Round(tsTime.TotalSeconds, 4);
+                            Console.WriteLine("\n\nGoal reached. Plan:");
+                            foreach (PlanningAction action in plan)
+                            {
+                                Console.WriteLine(action.Name);
+                            }
+
+                            using (StreamWriter sw = new StreamWriter(sOutputFile, true))
+                            {
+                                sw.WriteLine(sName + ", " + pomcpAlgorithm.MaxInnerDepth + "," + SIMULATIONS + "," + RolloutPolicy.Name() + "," + MaxInnerDepth + ", " + i + ", " + plan.Count + ", " + tsTime.TotalSeconds);
+                                sw.Close();
+                            }
+                        }
+                        catch
+                        {
+
+                        }
+
+
+
+
+                        //averageTimeInSeconds += Math.Round(tsTime.TotalSeconds, 4);
+                        /* Console.WriteLine("Time: " + Math.Round(tsTime.TotalSeconds, 4));
+                         Console.WriteLine("************************************************\n\n");*/
+                    }
+                    Console.WriteLine($"average time = {averageTimeInSeconds / (double)numberOfSuccesRuns}.");
+                    Console.WriteLine($"average steps = {averageStepsToGoal / numberOfSuccesRuns}.");
+                    Console.WriteLine($"Success rate = {((double)numberOfSuccesRuns * 100) / NumOfRuns}%.");
+
+                    using (StreamWriter sw = new StreamWriter(sOutputFile, true))
+                    {
+                        sw.WriteLine(sName + ", " + sPolicy + ", " + averageTimeInSeconds / (double)numberOfSuccesRuns + ", " + averageStepsToGoal / numberOfSuccesRuns + ", " + ((double)numberOfSuccesRuns * 100) / NumOfRuns);
+                        sw.Close();
+                    }
                 }
-                
-                
-                
-                
-                //averageTimeInSeconds += Math.Round(tsTime.TotalSeconds, 4);
-                /* Console.WriteLine("Time: " + Math.Round(tsTime.TotalSeconds, 4));
-                 Console.WriteLine("************************************************\n\n");*/
             }
-            Console.WriteLine($"average time = {averageTimeInSeconds/ (double)numberOfSuccesRuns}.");
-            Console.WriteLine($"average steps = {averageStepsToGoal / numberOfSuccesRuns}.");
-            Console.WriteLine($"Success rate = {((double)numberOfSuccesRuns * 100) / NumOfRuns}%.");
-
-
-
         }
 
         public static void RunPlanner(string sDomainFile, string sProblemFile, string sOutputFile, bool bOnline, bool bValidate = false)
@@ -171,7 +211,7 @@ namespace CPORLib
             {
                 //sdr.OnlineReplanning();
                 int cIterations = 10, cSuccess = 0;
-                    int idx = 0;
+                int idx = 0;
                 for (int i = 0; i < cIterations; i++)
                 {
                     SDRPlanner sdr = new SDRPlanner(domain, problem);
@@ -179,7 +219,7 @@ namespace CPORLib
                     Console.WriteLine("Starting " + domain.Name);
                     while (!sim.GoalReached)
                     {
-                        
+
                         string sAction = sdr.GetAction();
                         if (sAction == null)
                             Console.Write("*");
@@ -194,7 +234,7 @@ namespace CPORLib
                         }
                         Console.WriteLine(idx + ") Executed " + sAction + ", received " + sObservation);
                         idx++;
-                        
+
                     }
                     cSuccess++;
                 }
@@ -212,7 +252,7 @@ namespace CPORLib
                         Console.WriteLine("Invalid plan");
             }
         }
-        
+
 
     }
 }

@@ -285,7 +285,7 @@ namespace CPORLib.Algorithms
 
             // Finished run inside the tree, now do rollout.
             
-            if (RolloutPolicy is ParticelAverageHAddPolicy ParticleRolloutPolicy)
+            if (RolloutPolicy is ParticleAverageHAddPolicy ParticleRolloutPolicy)
             {
                 ParticleRolloutPolicy.UpdateParticle(Current.ParticleFilter);
             }
@@ -653,8 +653,8 @@ namespace CPORLib.Algorithms
             // State CurrentState = Problem.GetInitialBelief().ChooseState(true);
             PartiallySpecifiedState CurrentState = Root.PartiallySpecifiedState.Clone();
             State sUnderlyingState = CurrentState.UnderlyingEnvironmentState;
-            Console.WriteLine(sUnderlyingState);
-            if(verbose) Console.WriteLine(string.Join(",", CurrentState.Observed.Where(predicate => !predicate.Negation)));
+            if(verbose) 
+                Console.WriteLine(sUnderlyingState.ToString());
             //while (!Problem.IsGoalState(CurrentState.UnderlyingEnvironmentState))
             ObservationPomcpNode nCurrent = Root;
 

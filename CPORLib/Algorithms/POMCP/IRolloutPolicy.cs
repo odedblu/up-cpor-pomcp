@@ -9,9 +9,10 @@ using Action = CPORLib.PlanningModel.PlanningAction;
 
 namespace CPORLib.Algorithms
 {
-    internal interface IRolloutPolicy
+    public interface IRolloutPolicy
     {
-        (Action, State) ChooseAction(State s);
-        (Action, State, ISet<State>) ChooseAction(State s, ISet<State> l, bool bPreferRefutation);
+        public string Name();
+        public (Action, State) ChooseAction(State s);
+        public (Action, State, ISet<State>) ChooseAction(State s, ISet<State> l, bool bPreferRefutation);
     }
 }
